@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html><head>
+<script>window.__resources = {
+  "wtmd": "assets/wtmd.png",
+  "kqed": "assets/kqed.png",
+  "favAdd": "assets/favAdd.png",
+  "wumb": "assets/wumb.png",
+  "wwoz": "assets/wwoz.png",
+  "kexp": "assets/kexp.png",
+  "kcrw": "assets/kcrw.png",
+  "favRemove": "assets/favRemove.png",
+  "adGerber": "assets/adGerber.png",
+  "wwfm": "assets/wwfm.png",
+  "radioparadise": "assets/radioparadise.png",
+  "wxpn": "assets/wxpn.png",
+  "adHeinz": "assets/adHeinz.png",
+  "adNespresso": "assets/adNespresso.png",
+  "wbez": "assets/wbez.png",
+  "current": "assets/current.png",
+  "wfuv": "assets/wfuv.png",
+  "wnyc": "assets/wnyc.png",
+  "https://unpkg.com/react@18.3.1/umd/react.production.min.js": "vendor/react.js",
+  "https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js": "vendor/react-dom.js"
+};</script>
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<script src="vendor/dc-runtime.js"></script>
+<title>Live Radio Dial</title>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; }
+  @keyframes rd-marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+  @keyframes rd-slide-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  @keyframes rd-spin { to { transform: rotate(360deg); } }
+  a { color: #c6002b; }
+  a:hover { color: #a00023; }
+</style>
+</helmet>
+
+<div ref="{{ setRootEl }}" style="min-height: 100vh; background: #f6f8f9; position: relative; --rd-accent: #c6002b; --rd-accentDark: #a00023;">
+
+  <!-- Sticky Header -->
+  <div style="position: sticky; top: 0; z-index: 40; background: #f6f8f9;">
+    <div style="background: #f6f8f9; border-bottom: 1px solid #e6eaed;">
+      <div style="display: flex; align-items: center; justify-content: space-between; padding: 0 8px; height: 44px;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <button sc-camel-on-click="{{ onBack }}" aria-label="Back" style="padding: 8px; border: none; background: transparent; border-radius: 9999px; cursor: pointer; color: #27292d; display: flex;" style-hover="background: rgba(0,0,0,0.05);">
+            <svg width="24" height="24" sc-camel-view-box="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"></path></svg>
+          </button>
+          <h1 style="font-size: 18px; font-weight: 600; color: #000; margin: 0;">Live Radio Dial</h1>
+        </div>
+        <div style="display: flex; align-items: center; gap: 4px;">
+          <button sc-camel-on-click="{{ noop }}" aria-label="Search" style="padding: 8px; border: none; background: transparent; border-radius: 9999px; cursor: pointer; color: #27292d; display: flex;" style-hover="background: rgba(0,0,0,0.05);">
+            <svg width="24" height="24" sc-camel-view-box="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
+          </button>
+          <button sc-camel-on-click="{{ noop }}" aria-label="AirPlay" style="padding: 8px; border: none; background: transparent; border-radius: 9999px; cursor: pointer; color: #27292d; display: flex;" style-hover="background: rgba(0,0,0,0.05);">
+            <svg width="24" height="24" sc-camel-view-box="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-1"></path><path d="m12 15 5 6H7Z"></path></svg>
+          </button>
+          <button sc-camel-on-click="{{ openFilter }}" aria-label="Filter" style="padding: 8px; border: none; background: transparent; border-radius: 9999px; cursor: pointer; color: #27292d; display: flex;" style-hover="background: rgba(0,0,0,0.05);">
+            <svg width="24" height="24" sc-camel-view-box="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="21" x2="14" y1="4" y2="4"></line><line x1="10" x2="3" y1="4" y2="4"></line><line x1="21" x2="12" y1="12" y2="12"></line><line x1="8" x2="3" y1="12" y2="12"></line><line x1="21" x2="16" y1="20" y2="20"></line><line x1="12" x2="3" y1="20" y2="20"></line><line x1="14" x2="14" y1="2" y2="6"></line><line x1="8" x2="8" y1="10" y2="14"></line><line x1="16" x2="16" y1="18" y2="22"></line></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Error banner -->
+  <sc-if value="{{ error }}" hint-placeholder-val="{{ false }}">
+    <div style="position: fixed; top: 80px; left: 50%; transform: translateX(-50%); z-index: 50; padding: 0 16px;">
+      <div style="background: var(--rd-accent, #c6002b); color: #fff; padding: 12px 16px; border-radius: 8px; box-shadow: 0 10px 15px rgba(0,0,0,0.2); max-width: 360px;">
+        <p style="font-size: 14px; font-weight: 500; margin: 0;">{{ error }}</p>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- Sticky Now Playing + Schedule Header -->
+  <div style="position: sticky; top: 44px; z-index: 30; background: #f6f8f9; padding-bottom: 16px; transition: box-shadow 0.3s; box-shadow: {{ npShadow }};">
+    <div style="padding: 24px 16px 0 16px;">
+      <div style="max-width: 640px; margin: 0 auto; width: 100%;">
+        <div style="display: flex; flex-direction: column; gap: 12px; width: 100%;">
+          <!-- Artwork / Ad -->
+          <sc-if value="{{ notAd }}" hint-placeholder-val="{{ true }}">
+            <div style="width: 300px; height: 250px; margin: 0 auto; display: flex; align-items: center; justify-content: center;">
+              <img src="{{ artwork }}" alt="Now Playing" style="max-width: 248px; max-height: 248px; width: 100%; height: 100%; object-fit: cover; border-radius: 6px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            </div>
+          </sc-if>
+          <sc-if value="{{ adVisible }}" hint-placeholder-val="{{ false }}">
+            <div style="position: relative; width: 300px; margin: 0 auto;">
+              <button sc-camel-on-click="{{ dismissAd }}" aria-label="Dismiss ad" style="position: absolute; top: -12px; right: -12px; background: rgba(255,255,255,0.8); backdrop-filter: blur(8px); color: #374151; border: 1px solid rgba(0,0,0,0.1); border-radius: 9999px; padding: 6px; z-index: 10; cursor: pointer; box-shadow: 0 10px 15px rgba(0,0,0,0.2); display: flex;">
+                <svg width="16" height="16" sc-camel-view-box="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+              </button>
+              <div style="position: relative; width: 100%; height: 250px;">
+                <img src="{{ adImage }}" alt="Advertisement" style="width: 100%; height: 100%; object-fit: cover; border-radius: 6px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+              </div>
+            </div>
+          </sc-if>
+
+          <!-- Metadata + like controls -->
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; max-width: 600px; margin: 0 auto; width: 100%;">
+            <div style="flex: 1; min-width: 0;">
+              <div style="font-size: 16px; font-weight: 600; color: #27292d; position: relative; overflow: hidden;">
+                <sc-if value="{{ shouldMarquee }}" hint-placeholder-val="{{ false }}">
+                  <h2 style="display: inline-block; white-space: nowrap; animation: rd-marquee 15s linear infinite; margin: 0;">{{ title }}<span style="margin-left: 32px;">{{ title }}</span></h2>
+                </sc-if>
+                <sc-if value="{{ notMarquee }}" hint-placeholder-val="{{ true }}">
+                  <h2 style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin: 0;">{{ title }}</h2>
+                  <div style="position: absolute; right: 0; top: 0; bottom: 0; width: 60px; background: linear-gradient(to right, transparent, #f6f8f9); pointer-events: none;"></div>
+                </sc-if>
+              </div>
+              <p style="font-size: 12px; color: #3f4447; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin: 4px 0 0 0;">{{ artist }}</p>
+            </div>
+            <div style="display: flex; align-items: center; gap: 4px;">
+              <button sc-camel-on-click="{{ onPlaylist }}" disabled="{{ notMusic }}" aria-label="Add to Playlist" style="padding: 4px; border: none; background: transparent; border-radius: 9999px; cursor: pointer; color: #27292d; display: flex; opacity: {{ musicOpacity }};">
+                <svg width="24" height="24" sc-camel-view-box="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 12H3"></path><path d="M16 6H3"></path><path d="M16 18H3"></path><path d="M18 9v6"></path><path d="M21 12h-6"></path></svg>
+              </button>
+              <button sc-camel-on-click="{{ onLike }}" disabled="{{ notMusic }}" aria-label="Like" style="padding: 4px; border: none; background: {{ likeBg }}; border-radius: 9999px; cursor: pointer; color: #27292d; display: flex; opacity: {{ musicOpacity }};">
+                <svg width="24" height="24" sc-camel-view-box="0 0 24 24" fill="{{ likeFill }}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 10v12"></path><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z"></path></svg>
+              </button>
+              <button sc-camel-on-click="{{ onDislike }}" disabled="{{ notMusic }}" aria-label="Dislike" style="padding: 4px; border: none; background: {{ dislikeBg }}; border-radius: 9999px; cursor: pointer; color: #27292d; display: flex; opacity: {{ musicOpacity }};">
+                <svg width="24" height="24" sc-camel-view-box="0 0 24 24" fill="{{ dislikeFill }}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 14V2"></path><path d="M9 18.12 10 14H4.17a2 2 0 0 1-1.92-2.56l2.33-8A2 2 0 0 1 6.5 2H20a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.76a2 2 0 0 0-1.79 1.11L12 22a3.13 3.13 0 0 1-3-3.88Z"></path></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Schedule Header (time columns) -->
+    <div style="padding-left: 16px; margin-top: 16px;">
+      <div style="max-width: 1600px; width: 100%;">
+        <div ref="{{ setHeaderEl }}" sc-camel-on-scroll="{{ onHeaderScroll }}" style="overflow-x: auto; overflow-y: hidden; padding-right: 16px; scrollbar-width: none;">
+          <div style="display: flex; gap: 8px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #27292d; min-width: max-content;">
+            <div style="width: 40px; flex-shrink: 0;"></div>
+            <div style="position: sticky; left: 0; z-index: 10; background: #f6f8f9; width: 66px; flex-shrink: 0;"><div style="width: 66px;">Station</div></div>
+            <sc-for list="{{ headerCols }}" as="col" hint-placeholder-count="5">
+              <div style="width: 210px; flex-shrink: 0; text-align: left; position: relative;">
+                <div style="position: absolute; left: 0; top: 0; bottom: 0; width: 1px; background: #d1d5db;"></div>
+                <span style="padding-left: 12px;">{{ col.label }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Schedule body -->
+  <div style="padding-left: 16px; padding-bottom: 128px; position: relative;">
+    <div style="max-width: 1600px; width: 100%;">
+      <div style="display: flex; flex-direction: column; gap: 8px; width: 100%; padding-bottom: 32px;">
+        <div ref="{{ setBodyEl }}" sc-camel-on-scroll="{{ onBodyScroll }}" style="position: relative; width: 100%; overflow-x: auto; overflow-y: visible; padding-right: 16px; scrollbar-width: none;">
+          <!-- Now-time indicator -->
+          <div style="position: absolute; top: 0; bottom: 0; width: 2px; background: var(--rd-accent, #c6002b); z-index: 5; pointer-events: none; left: {{ indicatorLeft }}px;">
+            <div style="position: absolute; top: -8px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 8px solid var(--rd-accent, #c6002b);"></div>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 8px; min-width: max-content;">
+            <sc-for list="{{ stationRows }}" as="row" hint-placeholder-count="8">
+              <div style="display: flex; gap: 8px; align-items: center;">
+                <button sc-camel-on-click="{{ row.onToggleFav }}" aria-label="Toggle favorite" style="width: 40px; height: 66px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; border: none; background: transparent; border-radius: 6px; cursor: pointer;" style-hover="background: #e6eaed;">
+                  <img src="{{ row.favIcon }}" alt="favorite" style="width: 24px; height: 24px;">
+                </button>
+                <div style="position: sticky; left: 0; z-index: 10; background: #f6f8f9; transition: box-shadow 0.2s; box-shadow: {{ logoShadow }};">
+                  <img src="{{ row.logo }}" alt="{{ row.name }}" style="width: 66px; height: 66px; border-radius: 6px; object-fit: cover; box-shadow: 0 1px 2px rgba(0,0,0,0.08); background: #fff;">
+                </div>
+                <div style="display: flex; gap: 8px;">
+                  <sc-for list="{{ row.cells }}" as="cell" hint-placeholder-count="4">
+                    <sc-if value="{{ cell.isShow }}" hint-placeholder-val="{{ true }}">
+                      <button sc-camel-on-click="{{ cell.onClick }}" style="position: relative; background: #e6eaed; border: none; border-radius: 6px; height: 66px; flex-shrink: 0; cursor: pointer; overflow: hidden; width: {{ cell.width }}px; padding: 0;" style-hover="background: #d6dadd;">
+                        <div style="display: flex; align-items: center; gap: 8px; height: 100%; padding: 0 16px;">
+                          <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 2px; min-width: 0;">
+                            <p style="font-size: 14px; font-weight: 600; color: #3f4447; text-align: left; line-height: 1.2; margin: 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">{{ cell.title }}</p>
+                            <p style="font-size: 12px; color: #27292d; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; margin: 0;">{{ cell.subtitle }}</p>
+                          </div>
+                        </div>
+                        <sc-if value="{{ cell.isPlaying }}" hint-placeholder-val="{{ false }}">
+                          <div style="position: absolute; inset: 0; border: 2px solid var(--rd-accent, #c6002b); border-radius: 6px; pointer-events: none;"></div>
+                        </sc-if>
+                      </button>
+                    </sc-if>
+                    <sc-if value="{{ cell.isEmpty }}" hint-placeholder-val="{{ false }}">
+                      <div style="height: 66px; flex-shrink: 0; width: {{ cell.width }}px;"></div>
+                    </sc-if>
+                  </sc-for>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Bottom fade -->
+    <div style="position: fixed; bottom: 0; left: 0; right: 0; height: 128px; background: linear-gradient(to top, #f6f8f9, transparent); pointer-events: none; z-index: 20;"></div>
+  </div>
+
+  <!-- Media Controls pill -->
+  <div style="position: fixed; bottom: 12px; left: 0; right: 0; z-index: 50; display: flex; justify-content: center; padding: 0 16px;">
+    <div style="background: rgba(0,0,0,0.7); backdrop-filter: blur(6px); border-radius: 9999px; padding: 4px 8px; display: flex; align-items: center; justify-content: center; gap: 16px; box-shadow: 0 10px 15px rgba(0,0,0,0.25); width: 320px;">
+      <button sc-camel-on-click="{{ noop }}" aria-label="Microphone" style="padding: 8px; background: var(--rd-accent, #c6002b); color: #fff; border: none; border-radius: 9999px; cursor: pointer; flex-shrink: 0; display: flex;">
+        <svg width="24" height="24" sc-camel-view-box="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" x2="12" y1="19" y2="22"></line></svg>
+      </button>
+      <button sc-camel-on-click="{{ onPrevious }}" aria-label="Previous" style="padding: 8px; color: #fff; background: transparent; border: none; border-radius: 9999px; cursor: pointer; flex-shrink: 0; display: flex;" style-hover="background: rgba(255,255,255,0.2);">
+        <svg width="24" height="24" sc-camel-view-box="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"></path></svg>
+      </button>
+      <button sc-camel-on-click="{{ onPlayPause }}" aria-label="Play/Pause" style="background: #fff; color: #000; padding: 16px; border: none; border-radius: 9999px; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.2); flex-shrink: 0; display: flex; transition: transform 0.15s;" style-hover="transform: scale(1.05);">
+        <sc-if value="{{ isBuffering }}" hint-placeholder-val="{{ false }}">
+          <svg width="32" height="32" sc-camel-view-box="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="animation: rd-spin 1s linear infinite;"><path d="M21 12a9 9 0 1 1-6.219-8.56"></path></svg>
+        </sc-if>
+        <sc-if value="{{ showPause }}" hint-placeholder-val="{{ false }}">
+          <svg width="32" height="32" sc-camel-view-box="0 0 24 24" fill="currentColor"><rect x="14" y="4" width="4" height="16" rx="1"></rect><rect x="6" y="4" width="4" height="16" rx="1"></rect></svg>
+        </sc-if>
+        <sc-if value="{{ showPlay }}" hint-placeholder-val="{{ true }}">
+          <svg width="32" height="32" sc-camel-view-box="0 0 24 24" fill="currentColor"><polygon points="6 3 20 12 6 21 6 3"></polygon></svg>
+        </sc-if>
+      </button>
+      <button sc-camel-on-click="{{ onNext }}" aria-label="Next" style="padding: 8px; color: #fff; background: transparent; border: none; border-radius: 9999px; cursor: pointer; flex-shrink: 0; display: flex;" style-hover="background: rgba(255,255,255,0.2);">
+        <svg width="24" height="24" sc-camel-view-box="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg>
+      </button>
+      <button sc-camel-on-click="{{ openMediaMenu }}" aria-label="More options" style="padding: 8px; color: #fff; background: transparent; border: none; border-radius: 9999px; cursor: pointer; flex-shrink: 0; display: flex;" style-hover="background: rgba(255,255,255,0.2);">
+        <svg width="24" height="24" sc-camel-view-box="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle><circle cx="5" cy="12" r="1"></circle></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Media Menu Bottom Sheet -->
+  <sc-if value="{{ mediaSheetOpen }}" hint-placeholder-val="{{ false }}">
+    <div sc-camel-on-click="{{ closeSheet }}" style="position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100;"></div>
+    <div style="position: fixed; left: 0; right: 0; bottom: 0; z-index: 101; background: #fff; border-radius: 24px 24px 0 0; box-shadow: 0 -10px 30px rgba(0,0,0,0.25); max-height: 80vh; display: flex; flex-direction: column; animation: rd-slide-up 0.3s ease-out;">
+      <div style="display: flex; justify-content: center; padding: 12px 0 8px 0;"><div style="width: 40px; height: 4px; background: #d1d5db; border-radius: 9999px;"></div></div>
+      <div style="display: flex; align-items: center; justify-content: space-between; padding: 16px 24px; border-bottom: 1px solid #e5e7eb;">
+        <h2 style="font-weight: 600; color: #27292d; margin: 0;">{{ mediaSheetTitle }}</h2>
+        <button sc-camel-on-click="{{ closeSheet }}" aria-label="Close" style="padding: 8px; border: none; background: transparent; border-radius: 9999px; cursor: pointer; color: #27292d; display: flex;" style-hover="background: #f3f4f6;"><svg width="20" height="20" sc-camel-view-box="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button>
+      </div>
+      <div style="flex: 1; overflow-y: auto; padding: 16px 24px; display: flex; flex-direction: column; gap: 8px;">
+        <button sc-camel-on-click="{{ onGoToStation }}" style="width: 100%; display: flex; align-items: center; gap: 12px; padding: 16px; border-radius: 12px; background: #f9fafb; border: 2px solid transparent; cursor: pointer;" style-hover="background: #f3f4f6;"><svg width="20" height="20" sc-camel-view-box="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9"></path><path d="M7.8 16.2c-2.3-2.3-2.3-6.1 0-8.5"></path><circle cx="12" cy="12" r="2"></circle><path d="M16.2 7.8c2.3 2.3 2.3 6.1 0 8.5"></path><path d="M19.1 4.9C23 8.8 23 15.2 19.1 19.1"></path></svg><span style="font-weight: 500; color: #27292d;">Go to Station</span></button>
+        <button sc-camel-on-click="{{ closeSheet }}" style="width: 100%; display: flex; align-items: center; gap: 12px; padding: 16px; border-radius: 12px; background: #f9fafb; border: 2px solid transparent; cursor: pointer;" style-hover="background: #f3f4f6;"><svg width="20" height="20" sc-camel-view-box="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" x2="12" y1="19" y2="22"></line></svg><span style="font-weight: 500; color: #27292d;">Send Talkback</span></button>
+        <button sc-camel-on-click="{{ closeSheet }}" style="width: 100%; display: flex; align-items: center; gap: 12px; padding: 16px; border-radius: 12px; background: #f9fafb; border: 2px solid transparent; cursor: pointer;" style-hover="background: #f3f4f6;"><svg width="20" height="20" sc-camel-view-box="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2Z"></path><line x1="12" x2="12" y1="7" y2="13"></line><line x1="15" x2="9" y1="10" y2="10"></line></svg><span style="font-weight: 500; color: #27292d;">Add to Presets</span></button>
+        <button sc-camel-on-click="{{ closeSheet }}" style="width: 100%; display: flex; align-items: center; gap: 12px; padding: 16px; border-radius: 12px; background: #f9fafb; border: 2px solid transparent; cursor: pointer;" style-hover="background: #f3f4f6;"><svg width="20" height="20" sc-camel-view-box="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" x2="15.42" y1="13.51" y2="17.49"></line><line x1="15.41" x2="8.59" y1="6.51" y2="10.49"></line></svg><span style="font-weight: 500; color: #27292d;">Share Station</span></button>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- Filter Bottom Sheet -->
+  <sc-if value="{{ filterOpen }}" hint-placeholder-val="{{ false }}">
+    <div sc-camel-on-click="{{ closeSheet }}" style="position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 40;"></div>
+    <div style="position: fixed; left: 0; right: 0; bottom: 0; z-index: 50; background: #fff; border-radius: 16px 16px 0 0; box-shadow: 0 -10px 30px rgba(0,0,0,0.25); max-height: 80vh; overflow: hidden; display: flex; flex-direction: column; animation: rd-slide-up 0.3s ease-out;">
+      <div style="display: flex; align-items: center; justify-content: space-between; padding: 24px 24px 16px 24px; border-bottom: 1px solid #e5e7eb;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <sc-if value="{{ filterNotMain }}" hint-placeholder-val="{{ false }}">
+            <button sc-camel-on-click="{{ filterBack }}" aria-label="Back" style="padding: 4px; border: none; background: transparent; border-radius: 9999px; cursor: pointer; color: #27292d; display: flex;" style-hover="background: #f3f4f6;"><svg width="20" height="20" sc-camel-view-box="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"></path></svg></button>
+          </sc-if>
+          <h2 style="font-size: 20px; font-weight: 600; color: #27292d; margin: 0;">{{ filterTitle }}</h2>
+        </div>
+        <sc-if value="{{ showClearAll }}" hint-placeholder-val="{{ false }}">
+          <button sc-camel-on-click="{{ clearAll }}" style="font-size: 14px; color: var(--rd-accent, #c6002b); font-weight: 500; background: transparent; border: none; cursor: pointer;">Clear All</button>
+        </sc-if>
+      </div>
+
+      <div style="overflow-y: auto; flex: 1;">
+        <!-- Main -->
+        <sc-if value="{{ filterMain }}" hint-placeholder-val="{{ true }}">
+          <div style="padding: 16px 24px; display: flex; flex-direction: column; gap: 8px;">
+            <button sc-camel-on-click="{{ goLocation }}" style="width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 16px; border-radius: 8px; background: transparent; border: none; cursor: pointer; text-align: left;" style-hover="background: #f3f4f6;">
+              <div style="display: flex; flex-direction: column; gap: 4px;"><span style="font-weight: 500; color: #27292d;">Location</span><span style="font-size: 14px; color: #6b7280;">{{ locationLabel }}</span></div>
+              <svg width="20" height="20" sc-camel-view-box="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg>
+            </button>
+            <button sc-camel-on-click="{{ goGenre }}" style="width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 16px; border-radius: 8px; background: transparent; border: none; cursor: pointer; text-align: left;" style-hover="background: #f3f4f6;">
+              <div style="display: flex; flex-direction: column; gap: 4px;"><span style="font-weight: 500; color: #27292d;">Genre</span><span style="font-size: 14px; color: #6b7280;">{{ genreLabel }}</span></div>
+              <svg width="20" height="20" sc-camel-view-box="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg>
+            </button>
+            <button sc-camel-on-click="{{ goSort }}" style="width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 16px; border-radius: 8px; background: transparent; border: none; cursor: pointer; text-align: left;" style-hover="background: #f3f4f6;">
+              <div style="display: flex; flex-direction: column; gap: 4px;"><span style="font-weight: 500; color: #27292d;">Sort</span><span style="font-size: 14px; color: #6b7280;">{{ sortLabel }}</span></div>
+              <svg width="20" height="20" sc-camel-view-box="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg>
+            </button>
+          </div>
+        </sc-if>
+
+        <!-- Location -->
+        <sc-if value="{{ filterLocationPage }}" hint-placeholder-val="{{ false }}">
+          <div style="padding: 16px 24px; display: flex; flex-direction: column; gap: 4px;">
+            <sc-for list="{{ locationOptions }}" as="opt" hint-placeholder-count="6">
+              <button sc-camel-on-click="{{ opt.onClick }}" style="width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-radius: 8px; border: none; cursor: pointer; background: {{ opt.bg }}; color: {{ opt.color }};" style-hover="background: #f3f4f6;">
+                <div style="display: flex; align-items: center; gap: 8px;"><span style="font-weight: 500;">{{ opt.label }}</span><span style="font-size: 14px; color: #6b7280;">{{ opt.countLabel }}</span></div>
+                <sc-if value="{{ opt.selected }}" hint-placeholder-val="{{ false }}"><svg width="20" height="20" sc-camel-view-box="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></sc-if>
+              </button>
+            </sc-for>
+          </div>
+        </sc-if>
+
+        <!-- Genre -->
+        <sc-if value="{{ filterGenrePage }}" hint-placeholder-val="{{ false }}">
+          <div style="padding: 16px 24px; display: flex; flex-direction: column; gap: 4px;">
+            <sc-for list="{{ genreOptions }}" as="opt" hint-placeholder-count="6">
+              <button sc-camel-on-click="{{ opt.onClick }}" style="width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-radius: 8px; border: none; cursor: pointer; background: {{ opt.bg }}; color: {{ opt.color }};" style-hover="background: #f3f4f6;">
+                <div style="display: flex; align-items: center; gap: 8px;"><span style="font-weight: 500;">{{ opt.label }}</span><span style="font-size: 14px; color: #6b7280;">{{ opt.countLabel }}</span></div>
+                <sc-if value="{{ opt.selected }}" hint-placeholder-val="{{ false }}"><svg width="20" height="20" sc-camel-view-box="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></sc-if>
+              </button>
+            </sc-for>
+          </div>
+        </sc-if>
+
+        <!-- Sort -->
+        <sc-if value="{{ filterSortPage }}" hint-placeholder-val="{{ false }}">
+          <div style="padding: 16px 24px; display: flex; flex-direction: column; gap: 4px;">
+            <sc-for list="{{ sortOptions }}" as="opt" hint-placeholder-count="4">
+              <button sc-camel-on-click="{{ opt.onClick }}" style="width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-radius: 8px; border: none; cursor: pointer; background: {{ opt.bg }}; color: {{ opt.color }};" style-hover="background: #f3f4f6;">
+                <div style="display: flex; align-items: center; gap: 8px;"><span style="font-weight: 500;">{{ opt.label }}</span></div>
+                <sc-if value="{{ opt.selected }}" hint-placeholder-val="{{ false }}"><svg width="20" height="20" sc-camel-view-box="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></sc-if>
+              </button>
+            </sc-for>
+          </div>
+        </sc-if>
+      </div>
+
+      <div style="padding: 16px 24px; border-top: 1px solid #e5e7eb; background: #f9fafb;">
+        <button sc-camel-on-click="{{ closeSheet }}" style="width: 100%; background: var(--rd-accent, #c6002b); color: #fff; padding: 12px; border: none; border-radius: 8px; font-weight: 500; cursor: pointer;" style-hover="background: var(--rd-accentDark, #a00023);">Apply Filters</button>
+      </div>
+    </div>
+  </sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script="" data-props="{&quot;$preview&quot;: {&quot;width&quot;: 430, &quot;height&quot;: 900}, &quot;accentColor&quot;: {&quot;editor&quot;: &quot;color&quot;, &quot;default&quot;: &quot;#c6002b&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;options&quot;: [&quot;#c6002b&quot;, &quot;#1d4ed8&quot;, &quot;#047857&quot;, &quot;#7c3aed&quot;, &quot;#db2777&quot;], &quot;section&quot;: &quot;Theme&quot;}, &quot;showAd&quot;: {&quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: false, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;Behavior&quot;}, &quot;autoPlay&quot;: {&quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: false, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;Behavior&quot;}}">
+class Component extends DCLogic {
+  stationData = [
+    { stationuuid: '9610a044-0601-11e8-ae97-52543be04c81', name: 'Radio Paradise', url_resolved: 'https://stream.radioparadise.com/aac-320', homepage: 'https://radioparadise.com/', tags: 'rock,eclectic,alternative', country: 'United States', state: 'California', city: 'Paradise', description: 'Eclectic music from Paradise' },
+    { stationuuid: 'kcrw-899', name: 'WFUV 90.7 FM', url_resolved: 'https://onair.wfuv.org/onair-hi', homepage: 'https://www.wfuv.org/', tags: 'alternative,folk,americana,indie', country: 'United States', state: 'New York', city: 'New York City', description: 'Public Radio from Fordham University' },
+    { stationuuid: 'wxpn-fm-889', name: 'WXPN 88.5 FM', url_resolved: 'https://wxpnhi.xpn.org/xpnhi', homepage: 'https://www.xpn.org/', tags: 'alternative,adult alternative,indie', country: 'United States', state: 'Pennsylvania', city: 'Philadelphia', description: "Philadelphia's Music Discovery" },
+    { stationuuid: 'kutx-fm-987', name: 'KEXP 90.3 FM', url_resolved: 'https://kexp-mp3-128.streamguys1.com/kexp128.mp3', homepage: 'https://www.kexp.org/', tags: 'alternative,indie,rock,eclectic', country: 'United States', state: 'Washington', city: 'Seattle', description: 'Where the Music Matters' },
+    { stationuuid: '9604eeb3-0601-11e8-ae97-52543be04c81', name: 'The Current', url_resolved: 'https://current.stream.publicradio.org/current.mp3', homepage: 'https://www.thecurrent.org/', tags: 'alternative,indie,rock', country: 'United States', state: 'Minnesota', city: 'St. Paul', description: 'The Soundtrack to Your Life' },
+    { stationuuid: '961fb4ba-0601-11e8-ae97-52543be04c81', name: 'WWOZ New Orleans', url_resolved: 'https://wwoz-sc.streamguys1.com/wwoz-hi.mp3', homepage: 'https://www.wwoz.org/', tags: 'jazz,blues,new orleans', country: 'United States', state: 'Louisiana', city: 'New Orleans', description: 'New Orleans Music & Culture' },
+    { stationuuid: '960f8676-0601-11e8-ae97-52543be04c81', name: 'WTMD', url_resolved: 'https://wtmd.streamguys1.com/wtmd', homepage: 'https://wtmd.org/', tags: 'alternative,indie,rock', country: 'United States', state: 'Maryland', city: 'Baltimore', description: "Baltimore's Alternative" },
+    { stationuuid: '962082da-0601-11e8-ae97-52543be04c81', name: 'WUMB', url_resolved: 'https://wumb.streamguys1.com/wumb919fast', homepage: 'https://www.wumb.org/', tags: 'folk,americana,bluegrass', country: 'United States', state: 'Massachusetts', city: 'Boston', description: "America's Home for Folk Music" },
+    { stationuuid: 'wnyc-fm-939', name: 'WNYC FM 93.9', url_resolved: 'https://fm939.wnyc.org/wnycfm', homepage: 'https://www.wnyc.org/', tags: 'news,talk,public radio', country: 'United States', state: 'New York', city: 'New York', description: 'New York Public Radio' },
+    { stationuuid: 'wbez-915', name: 'WBEZ 91.5 Chicago', url_resolved: 'https://stream.wbez.org/wbez128.mp3', homepage: 'https://www.wbez.org/', tags: 'news,talk,public radio', country: 'United States', state: 'Illinois', city: 'Chicago', description: 'Chicago Public Media' },
+    { stationuuid: 'kqed-fm-88', name: 'KQED FM 88.5', url_resolved: 'https://streams.kqed.org/kqedradio', homepage: 'https://www.kqed.org/', tags: 'news,talk,public radio', country: 'United States', state: 'California', city: 'San Francisco', description: "The Bay Area's NPR Station" },
+    { stationuuid: 'knkx-fm-883', name: 'WWFM The Jazz Station', url_resolved: 'https://wwfm.streamguys1.com/live-mp3', homepage: 'https://www.wwfm.org/', tags: 'jazz,blues,classical', country: 'United States', state: 'New Jersey', city: 'Trenton', description: 'The Jazz Station' },
+    { stationuuid: 'wfuv-fm-907', name: 'WMOT Roots Radio', url_resolved: 'https://playerservices.streamtheworld.com/api/livestream-redirect/WMOTFM.mp3', homepage: 'https://www.wmot.org/', tags: 'americana,folk,bluegrass', country: 'United States', state: 'Tennessee', city: 'Murfreesboro', description: 'Roots Radio' }
+  ];
+  artworkMap = {
+    'kutx-fm-987': window.__resources.kexp, 'kqed-fm-88': window.__resources.kqed,
+    '9604eeb3-0601-11e8-ae97-52543be04c81': window.__resources.current, 'wbez-915': window.__resources.wbez,
+    'wnyc-fm-939': window.__resources.wnyc, '960f8676-0601-11e8-ae97-52543be04c81': window.__resources.wtmd,
+    '961fb4ba-0601-11e8-ae97-52543be04c81': window.__resources.wwoz, '962082da-0601-11e8-ae97-52543be04c81': window.__resources.wumb,
+    '9610a044-0601-11e8-ae97-52543be04c81': window.__resources.radioparadise, 'kcrw-899': window.__resources.kcrw,
+    'wxpn-fm-889': window.__resources.wxpn, 'knkx-fm-883': window.__resources.wwfm, 'wfuv-fm-907': window.__resources.wfuv
+  };
+  adImages = [window.__resources.adHeinz, window.__resources.adNespresso, window.__resources.adGerber];
+
+  constructor(props) {
+    super(props);
+    const stations = this.buildStations();
+    let favorites = new Set();
+    try { const s = localStorage.getItem('favoriteStations'); if (s) favorites = new Set(JSON.parse(s)); } catch (e) {}
+    const now = new Date();
+    const first = stations[0];
+    const show = first ? this.currentShowFor(first, now) : null;
+    this.state = {
+      stations,
+      currentStationId: first ? first.id : null,
+      currentShowId: show ? show.id : null,
+      isPlaying: false, isBuffering: false,
+      favorites, currentTime: now,
+      activeSheet: null, filterPage: 'main',
+      filters: { location: null, genre: null, sort: null },
+      adVisible: false, adIndex: 0,
+      scrolledY: false, scrolledX: false,
+      liked: false, disliked: false, error: null,
+    };
+    this.timers = [];
+  }
+
+  // ---- data building ----
+  generateSchedule(name, tags) {
+    const showTemplates = {
+      rock: ['Morning Rock','Classic Rock Hour','Rock Drive','Hard Rock Evening','Late Night Rock','Rock Anthems'],
+      jazz: ['Morning Jazz','Jazz Café','Smooth Jazz Hour','Evening Standards','Late Night Jazz','Jazz Sessions'],
+      classical: ['Morning Classical','Classical Masterpieces','Afternoon Symphony','Evening Concerto','Night Serenade','Classical Hour'],
+      news: ['Morning News','Midday Update','Afternoon Headlines','Evening News','Night Report','News Roundup'],
+      talk: ['Morning Talk','Discussion Hour','Afternoon Conversation','Talk Drive','Evening Show','Late Night Talk'],
+      indie: ['Indie Morning','Alternative Hour','Indie Afternoon','Drive Time Indie','Evening Sessions','Late Night Indie'],
+      blues: ['Blues Morning','Delta Blues','Blues Afternoon','Blues Drive','Evening Blues','Midnight Blues'],
+      folk: ['Folk Morning','Acoustic Hour','Folk Tales','Drive Time Folk','Evening Ballads','Night Songs'],
+      alternative: ['Alt Morning','Alternative Hour','Afternoon Alt','Drive Time Alt','Evening Alt','Late Night Alt'],
+      americana: ['Americana Morning','Roots Hour','Americana Afternoon','Drive Time Roots','Evening Americana','Night Roots'],
+      default: ['Morning Show','Midday Mix','Afternoon Program','Drive Time','Evening Session','Late Night']
+    };
+    const hostNames = ['DJ Alex','Sarah Mitchell','Mike Johnson','Lisa Chen','David Martinez','Emma Rodriguez','Chris Anderson','Maya Patel','Ryan Thompson','Sophie Kim','James Wilson','Olivia Taylor','Marcus Brown','Zoe Davis','Tyler Scott','Hannah Lee','Jordan White','Ava Martin','Noah Garcia','Mia Robinson'];
+    const tagList = tags.split(',').map(t => t.trim().toLowerCase()).filter(Boolean);
+    let primary = 'default';
+    for (const t of tagList) { if (showTemplates[t]) { primary = t; break; } }
+    const templates = showTemplates[primary] || showTemplates.default;
+    const shows = [];
+    let hour = 8; const end = 24; let ti = 0;
+    while (hour < end) {
+      const r = Math.random();
+      let dur = r < 0.5 ? 1 : r < 0.8 ? 2 : r < 0.95 ? 3 : 4;
+      if (hour + dur > end) dur = end - hour;
+      shows.push({
+        id: `${name}-${hour}`, title: templates[ti % templates.length],
+        startTime: `${String(hour).padStart(2,'0')}:00`, endTime: `${String(hour+dur).padStart(2,'0')}:00`,
+        host: hostNames[Math.floor(Math.random()*hostNames.length)]
+      });
+      hour += dur; ti++;
+    }
+    return shows;
+  }
+  primaryGenre(tags) {
+    const t = tags.split(',').map(x => x.trim()).filter(Boolean);
+    if (t.length) return t[0].charAt(0).toUpperCase() + t[0].slice(1);
+    return 'Radio';
+  }
+  formatLocation(country, state, city) {
+    const abbr = {'Alabama':'AL','Alaska':'AK','Arizona':'AZ','Arkansas':'AR','California':'CA','Colorado':'CO','Connecticut':'CT','Delaware':'DE','Florida':'FL','Georgia':'GA','Hawaii':'HI','Idaho':'ID','Illinois':'IL','Indiana':'IN','Iowa':'IA','Kansas':'KS','Kentucky':'KY','Louisiana':'LA','Maine':'ME','Maryland':'MD','Massachusetts':'MA','Michigan':'MI','Minnesota':'MN','Mississippi':'MS','Missouri':'MO','Montana':'MT','Nebraska':'NE','Nevada':'NV','New Hampshire':'NH','New Jersey':'NJ','New Mexico':'NM','New York':'NY','North Carolina':'NC','North Dakota':'ND','Ohio':'OH','Oklahoma':'OK','Oregon':'OR','Pennsylvania':'PA','Rhode Island':'RI','South Carolina':'SC','South Dakota':'SD','Tennessee':'TN','Texas':'TX','Utah':'UT','Vermont':'VT','Virginia':'VA','Washington':'WA','West Virginia':'WV','Wisconsin':'WI','Wyoming':'WY'};
+    if (country === 'United States' && city && state) return `${city}, ${abbr[state] || state}`;
+    if (state && state.trim()) return `${state}, ${country}`;
+    return country;
+  }
+  isMusicStation(tags) {
+    const lt = tags.toLowerCase();
+    const news = ['news','talk','public radio','npr'].some(k => lt.includes(k));
+    const music = ['rock','jazz','blues','indie','alternative','folk','americana','eclectic','pop','electronic','hip-hop','country','classical'].some(k => lt.includes(k));
+    if (news && !music) return false;
+    if (music) return true;
+    return true;
+  }
+  buildStations() {
+    const list = this.stationData.map(rb => {
+      const shows = this.generateSchedule(rb.name, rb.tags);
+      const m = rb.name.match(/(\d+\.\d+)\s*(?:FM|MHz)/i);
+      return {
+        id: rb.stationuuid, name: rb.name,
+        logo: this.artworkMap[rb.stationuuid] || window.__resources.radioparadise,
+        genre: this.primaryGenre(rb.tags),
+        location: this.formatLocation(rb.country, rb.state, rb.city),
+        shows, streamUrl: rb.url_resolved, homepage: rb.homepage,
+        tags: rb.tags, description: rb.description,
+        frequency: m ? parseFloat(m[1]) : undefined
+      };
+    });
+    list.sort((a, b) => a.name.localeCompare(b.name));
+    return list;
+  }
+  currentShowFor(station, now) {
+    const h = now.getHours();
+    return station.shows.find(s => {
+      const sh = parseInt(s.startTime.split(':')[0]);
+      const eh = parseInt(s.endTime.split(':')[0]);
+      return h >= sh && h < eh;
+    }) || station.shows[0];
+  }
+
+  // ---- lifecycle ----
+  componentDidMount() {
+    this.applyAccent();
+    this.audio = new Audio();
+    this.audio.preload = 'none';
+    this.audio.addEventListener('playing', () => this.setState({ isPlaying: true, isBuffering: false }));
+    this.audio.addEventListener('pause', () => this.setState({ isPlaying: false }));
+    this.audio.addEventListener('waiting', () => this.setState({ isBuffering: true }));
+    this.audio.addEventListener('error', () => {
+      this.setState({ isBuffering: false, error: 'Unable to play this stream' });
+      this.timers.push(setTimeout(() => this.setState({ error: null }), 4000));
+    });
+    const cur = this.getStation(this.state.currentStationId);
+    if (cur && cur.streamUrl) { this.audio.src = cur.streamUrl; }
+    if (this.props.autoPlay && cur && cur.streamUrl) { this.tryPlay(); }
+
+    this.timers.push(setInterval(() => this.setState({ currentTime: new Date() }), 60000));
+    this._onScroll = () => { const s = window.scrollY > 10; if (s !== this.state.scrolledY) this.setState({ scrolledY: s }); };
+    window.addEventListener('scroll', this._onScroll, { passive: true });
+    this.setupAds();
+  }
+  componentDidUpdate() { this.applyAccent(); }
+  componentWillUnmount() {
+    this.timers.forEach(t => { clearTimeout(t); clearInterval(t); });
+    if (this.audio) { this.audio.pause(); this.audio.src = ''; }
+    if (this._onScroll) window.removeEventListener('scroll', this._onScroll);
+    [this.adInitTimer, this.adHideTimer, this.adNextTimer, this.adRotTimer].forEach(t => { clearTimeout(t); clearInterval(t); });
+  }
+
+  darken(hex, amt) {
+    try { let c = hex.replace('#',''); if (c.length === 3) c = c.split('').map(x=>x+x).join(''); const n = parseInt(c,16);
+      let r = Math.round(((n>>16)&255)*(1-amt)), g = Math.round(((n>>8)&255)*(1-amt)), b = Math.round((n&255)*(1-amt));
+      return '#'+[r,g,b].map(x=>x.toString(16).padStart(2,'0')).join(''); } catch(e){ return hex; }
+  }
+  applyAccent() {
+    if (!this.rootEl) return;
+    const a = this.props.accentColor || '#c6002b';
+    this.rootEl.style.setProperty('--rd-accent', a);
+    this.rootEl.style.setProperty('--rd-accentDark', this.darken(a, 0.15));
+  }
+
+  setupAds() {
+    const rotate = () => this.setState(s => ({ adIndex: Math.min(s.adIndex + 1, this.adImages.length - 1) }));
+    if (this.props.showAd) { this.setState({ adVisible: true, adIndex: 0 }); this.adRotTimer = setInterval(rotate, 3000); return; }
+    const startCycle = () => {
+      this.setState({ adVisible: true, adIndex: 0 });
+      this.adRotTimer = setInterval(rotate, 10000);
+      this.adHideTimer = setTimeout(() => {
+        clearInterval(this.adRotTimer);
+        this.setState({ adVisible: false });
+        this.adNextTimer = setTimeout(startCycle, 120000);
+      }, 30000);
+    };
+    this.adInitTimer = setTimeout(startCycle, 30000);
+  }
+
+  // ---- helpers ----
+  getStation(id) { return this.state.stations.find(s => s.id === id); }
+  getShow(station, id) { return station ? station.shows.find(s => s.id === id) : null; }
+  getFiltered() {
+    const { stations, filters } = this.state;
+    let f = [...stations];
+    if (filters.location) f = f.filter(s => s.location === filters.location);
+    if (filters.genre) f = f.filter(s => s.genre === filters.genre);
+    if (filters.sort === 'z-a') f.sort((a,b)=>b.name.localeCompare(a.name));
+    else if (filters.sort === 'frequency') f.sort((a,b)=>{ if(a.frequency===undefined&&b.frequency===undefined)return 0; if(a.frequency===undefined)return 1; if(b.frequency===undefined)return -1; return a.frequency-b.frequency; });
+    else f.sort((a,b)=>a.name.localeCompare(b.name));
+    return f;
+  }
+  tryPlay() { if (!this.audio) return; const p = this.audio.play(); if (p && p.catch) p.catch(()=>{}); }
+
+  // ---- actions ----
+  onPlayPause = () => { if (this.state.isPlaying) { this.audio && this.audio.pause(); } else { this.tryPlay(); } };
+  setStation(station, autoplay) {
+    if (!station) return;
+    const show = this.currentShowFor(station, new Date());
+    this.setState({ currentStationId: station.id, currentShowId: show ? show.id : null });
+    if (this.audio && station.streamUrl) { this.audio.src = station.streamUrl; if (autoplay) this.tryPlay(); }
+  }
+  selectShow = (stationId, showId) => {
+    const station = this.getStation(stationId); if (!station) return;
+    const show = this.getShow(station, showId);
+    this.setState({ currentStationId: stationId, currentShowId: showId });
+    if (this.audio && station.streamUrl) {
+      this.audio.src = station.streamUrl;
+      const h = new Date().getHours();
+      const sh = parseInt(show.startTime.split(':')[0]), eh = parseInt(show.endTime.split(':')[0]);
+      const airing = h >= sh && h < eh;
+      if (!this.state.isPlaying && airing) this.timers.push(setTimeout(() => this.tryPlay(), 300));
+    }
+  };
+  onNext = () => { const f = this.getFiltered(); if (!f.length) return; const i = f.findIndex(s=>s.id===this.state.currentStationId); this.setState({liked:false,disliked:false}); this.setStation(f[(i+1)%f.length], true); };
+  onPrevious = () => { const f = this.getFiltered(); if (!f.length) return; const i = f.findIndex(s=>s.id===this.state.currentStationId); this.setState({liked:false,disliked:false}); this.setStation(f[(i-1+f.length)%f.length], true); };
+  toggleFav = (id) => {
+    this.setState(s => { const n = new Set(s.favorites); n.has(id) ? n.delete(id) : n.add(id);
+      try { localStorage.setItem('favoriteStations', JSON.stringify(Array.from(n))); } catch(e){}
+      return { favorites: n }; });
+  };
+  onLike = () => { this.setState(s=>({liked:!s.liked, disliked:false})); if(this.state.currentStationId) this.toggleFav(this.state.currentStationId); };
+  onDislike = () => this.setState(s=>({disliked:!s.disliked, liked:false}));
+  openFilter = () => this.setState({ activeSheet: 'filter', filterPage: 'main' });
+  openMediaMenu = () => this.setState({ activeSheet: 'media-menu' });
+  closeSheet = () => this.setState({ activeSheet: null });
+  onGoToStation = () => { const st = this.getStation(this.state.currentStationId); if (st && st.homepage) window.open(st.homepage, '_blank'); this.closeSheet(); };
+
+  renderVals() {
+    const { stations, filters, currentTime, currentStationId, currentShowId, favorites,
+      isPlaying, isBuffering, adVisible, adIndex, scrolledY, scrolledX, liked, disliked, error,
+      activeSheet, filterPage } = this.state;
+
+    // time slots
+    const all = []; for (let h = 8; h <= 23; h++) { const disp = `${h>12?h-12:h===0?12:h}:00 ${h>=12?'PM':'AM'}`; all.push({ display: disp, hour: h }); }
+    const curHour = currentTime.getHours();
+    const visible = all.filter(s => s.hour >= curHour);
+    const vis = visible.length ? visible : [all[all.length-1]];
+    const headerCols = [{ label: 'Now Playing' }].concat(vis.slice(1).map(s => ({ label: s.display })));
+    const mins = currentTime.getMinutes();
+    const indicatorLeft = 40 + 8 + 66 + 8 + (mins/60)*210;
+
+    const filtered = this.getFiltered();
+    const curStation = this.getStation(currentStationId);
+    const curShow = curStation ? this.getShow(curStation, currentShowId) : null;
+
+    // station rows
+    const showForSlot = (station, hour) => station.shows.find(s => { const sh=parseInt(s.startTime.split(':')[0]), eh=parseInt(s.endTime.split(':')[0]); return hour>=sh && hour<eh; });
+    const stationRows = filtered.map(station => {
+      const favorited = favorites.has(station.id);
+      const cells = [];
+      vis.forEach((slot, index) => {
+        const show = showForSlot(station, slot.hour);
+        if (show && index > 0) { const prev = showForSlot(station, vis[index-1].hour); if (prev && prev.id === show.id) return; }
+        if (!show) { cells.push({ isShow:false, isEmpty:true, width:210, key:`${station.id}-e-${slot.hour}` }); return; }
+        const sh = parseInt(show.startTime.split(':')[0]), eh = parseInt(show.endTime.split(':')[0]);
+        const span = eh - sh; const width = span===1 ? 210 : (210*span)+(8*(span-1));
+        cells.push({
+          isShow:true, isEmpty:false, width, key:`${station.id}-${show.id}`,
+          title: show.title, subtitle: `${station.name} • ${station.description || station.genre}`,
+          isPlaying: currentStationId===station.id && currentShowId===show.id,
+          onClick: () => this.selectShow(station.id, show.id)
+        });
+      });
+      return { id: station.id, name: station.name, logo: station.logo, favorited,
+        favIcon: favorited ? window.__resources.favRemove : window.__resources.favAdd,
+        onToggleFav: () => this.toggleFav(station.id), cells };
+    });
+
+    // now playing
+    const title = curShow ? curShow.title : '';
+    const artist = curStation ? curStation.name : '';
+    const artwork = curStation ? curStation.logo : '';
+    const isMusic = curStation ? this.isMusicStation(curStation.tags || '') : true;
+    const shouldMarquee = (title || '').length > 30;
+
+    // filters
+    const locs = Array.from(new Set(stations.map(s=>s.location).filter(Boolean))).sort();
+    const gens = Array.from(new Set(stations.map(s=>s.genre).filter(Boolean))).sort();
+    const locCounts = {}; stations.forEach(s => { if (s.location) locCounts[s.location]=(locCounts[s.location]||0)+1; });
+    const genCounts = {}; stations.forEach(s => { if (s.genre) genCounts[s.genre]=(genCounts[s.genre]||0)+1; });
+    const accent = this.props.accentColor || '#c6002b';
+    const optStyle = (sel) => sel ? { bg: 'rgba(198,0,43,0.10)', color: accent } : { bg: 'transparent', color: '#27292d' };
+    const locationOptions = [{ label:'All Locations', selected: filters.location===null, countLabel:'', onClick:()=>this.setState({filters:{...filters,location:null}}), ...optStyle(filters.location===null) }]
+      .concat(locs.map(l => ({ label:l, selected: filters.location===l, countLabel:`(${locCounts[l]})`, onClick:()=>this.setState({filters:{...filters,location:l}}), ...optStyle(filters.location===l) })));
+    const genreOptions = [{ label:'All Genres', selected: filters.genre===null, countLabel:'', onClick:()=>this.setState({filters:{...filters,genre:null}}), ...optStyle(filters.genre===null) }]
+      .concat(gens.map(g => ({ label:g, selected: filters.genre===g, countLabel:`(${genCounts[g]})`, onClick:()=>this.setState({filters:{...filters,genre:g}}), ...optStyle(filters.genre===g) })));
+    const sortDefs = [['Default',null],['A-Z','a-z'],['Z-A','z-a'],['Frequency','frequency']];
+    const sortOptions = sortDefs.map(([label,val]) => ({ label, selected: filters.sort===val, onClick:()=>this.setState({filters:{...filters,sort:val}}), ...optStyle(filters.sort===val) }));
+    const sortLabel = filters.sort==='a-z'?'A-Z':filters.sort==='z-a'?'Z-A':filters.sort==='frequency'?'Frequency':'Default';
+    const hasActive = filters.location!==null || filters.genre!==null || filters.sort!==null;
+
+    return {
+      noop: () => {}, onBack: () => {},
+      // now playing
+      notAd: !adVisible, adVisible, adImage: this.adImages[adIndex],
+      artwork, title, artist, shouldMarquee, notMarquee: !shouldMarquee,
+      notMusic: !isMusic, musicOpacity: isMusic ? 1 : 0.3,
+      onLike: this.onLike, onDislike: this.onDislike, onPlaylist: () => {},
+      likeBg: liked ? 'rgba(39,41,45,0.1)' : 'transparent', likeFill: liked ? '#27292d' : 'none',
+      dislikeBg: disliked ? 'rgba(39,41,45,0.1)' : 'transparent', dislikeFill: disliked ? '#27292d' : 'none',
+      dismissAd: () => this.setState({ adVisible: false }),
+      npShadow: scrolledY ? '0 4px 12px rgba(0,0,0,0.08)' : 'none',
+      error,
+      // schedule
+      headerCols, indicatorLeft, stationRows, logoShadow: scrolledX ? '4px 0 8px rgba(0,0,0,0.1)' : 'none',
+      setHeaderEl: el => { this.headerEl = el; }, setBodyEl: el => { this.bodyEl = el; },
+      onBodyScroll: e => { const sl = e.currentTarget.scrollLeft; if (this.headerEl) this.headerEl.scrollLeft = sl; const s = sl > 0; if (s !== this.state.scrolledX) this.setState({ scrolledX: s }); },
+      onHeaderScroll: e => { if (this.bodyEl) this.bodyEl.scrollLeft = e.currentTarget.scrollLeft; },
+      setRootEl: el => { this.rootEl = el; this.applyAccent(); },
+      // media controls
+      isBuffering, showPause: !isBuffering && isPlaying, showPlay: !isBuffering && !isPlaying,
+      onPlayPause: this.onPlayPause, onNext: this.onNext, onPrevious: this.onPrevious, openMediaMenu: this.openMediaMenu,
+      // sheets
+      mediaSheetOpen: activeSheet === 'media-menu', mediaSheetTitle: curShow ? curShow.title : 'Now Playing',
+      filterOpen: activeSheet === 'filter', closeSheet: this.closeSheet, openFilter: this.openFilter, onGoToStation: this.onGoToStation,
+      filterMain: filterPage === 'main', filterNotMain: filterPage !== 'main',
+      filterLocationPage: filterPage === 'location', filterGenrePage: filterPage === 'genre', filterSortPage: filterPage === 'sort',
+      filterTitle: filterPage==='location'?'Location':filterPage==='genre'?'Genre':filterPage==='sort'?'Sort':'Filters',
+      filterBack: () => this.setState({ filterPage: 'main' }),
+      goLocation: () => this.setState({ filterPage: 'location' }), goGenre: () => this.setState({ filterPage: 'genre' }), goSort: () => this.setState({ filterPage: 'sort' }),
+      locationLabel: filters.location || 'All', genreLabel: filters.genre || 'All', sortLabel,
+      showClearAll: filterPage === 'main' && hasActive, clearAll: () => this.setState({ filters: { location:null, genre:null, sort:null } }),
+      locationOptions, genreOptions, sortOptions,
+    };
+  }
+}
+</script>
+
+
+
+</body></html>

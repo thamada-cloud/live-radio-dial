@@ -4,15 +4,19 @@ A live radio player laid out as an electronic programming guide: stations down t
 
 Originally prototyped in Claude Design; extracted here so it can be developed in Claude Code and hosted for research.
 
-## Running it
+## Where it runs
 
-Any static server works. There is no build step.
+**Live:** https://thamada-cloud.github.io/live-radio-dial/
+
+Served from `main` by GitHub Pages, which is why this repo is public: unmoderated participants have to reach the prototype with no login. Pushing to `main` redeploys it.
+
+**Locally.** Any static server works, there is no build step.
 
 ```
 python3 -m http.server 8788
 ```
 
-Then open http://127.0.0.1:8788/index.html
+Then open http://127.0.0.1:8788/index.html, or reach it from a phone on the same wifi at `http://<your-lan-ip>:8788/index.html`.
 
 ## How it is put together
 

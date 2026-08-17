@@ -83,3 +83,17 @@ Schedules are hand-authored and fixed, with day-parts that match the clock and b
 ## Research
 
 The study plan that drives the backlog above lives outside this repo, at `~/.claude/plans/i-need-you-to-serialized-hummingbird.md`.
+
+### Measured dimensions
+
+At a 375px-wide mobile viewport, with the clock pinned to 9:20am:
+
+| | |
+| :-- | :-- |
+| Station rows | 12 |
+| Time columns | 14 (10:00 AM to 11:00 PM) |
+| Grid width | 4054px against a 359px window, about 11 screen-widths |
+| Scroll to reach the 8pm column | ~3700px, on the order of ten swipes |
+| Cell widths | 210 / 428 / 646 / 864 / 1082 px, exactly 210px per hour |
+
+The horizontal dimension is the harsher constraint. Twelve rows scroll comfortably; fourteen columns do not. Whether a listener will scroll eleven screen-widths unprompted is the concept's biggest open question, which is why the study's time-axis task asks for a show ten hours out rather than one.

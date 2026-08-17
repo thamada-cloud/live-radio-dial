@@ -58,18 +58,27 @@ Three discovery mechanisms coexist on the one screen: scanning the grid, the Pre
 | `adsEnabled` | `false` | `setupAds` otherwise starts a cycle 30s after load regardless of the `showAd` prop, which is roughly ten interruptions over a 25-minute session. |
 | `externalLinks` | `false` | "Go to Station" otherwise `window.open`s the station homepage, stranding a participant on an external site. |
 
+### Data
+
+The lineup is a single market, New York, in `data/stations.js`. Station names, dial positions, call letters, genres, logos and stream URLs all come from iHeart's own live API (`liveStations?marketId=159`), so they are real rather than invented. Twelve of the 62 stations that endpoint returns were selected for format spread, and every stream was verified to return HTTP 200 with an audio content type, so every row actually plays.
+
+Worth knowing about the product: that endpoint shows the iHeartRadio app in New York carries competitors' stations too. WCBS-FM, ALT 92.3, WFAN and Mega 97.9 are Audacy or SBS properties. A guide of "the dial" therefore legitimately includes them, which is why they are in the lineup.
+
+Schedules are hand-authored and fixed, with day-parts that match the clock and block lengths from 1 to 5 hours so the grid's width encoding stays testable. Verified in the browser: cells render at 210, 428, 646, 864 and 1082 px, exactly 210px per hour.
+
 ### Still outstanding
 
-Two blockers remain, and both need a decision before they can be built:
-
-1. **Lineup is not iHeart.** Thirteen public radio stations (KEXP, WFUV, WWOZ, WNYC, KQED and similar), spanning alternative, indie, folk, americana, jazz and news. No Top 40, country, hip hop or mainstream pop. Blocked on the national-mix versus single-market decision.
-2. **Schedules are randomly generated per page load.** `generateSchedule` uses `Math.random()` for durations and hosts, so no two participants see the same grid and neither does one participant across a reload. Measured across six loads, a single station's schedule varied between 8 and 12 blocks with different boundaries every time.
-
-   A second bug rides along with it: show titles are drawn from a per-genre template list by array index rather than by clock, so the names desync from the time they sit in. At the pinned 9:20am, KEXP runs "Alternative Hour", then "Afternoon Alt", "Drive Time Alt", and "Evening Alt" by early afternoon. Replacing generation with a fixed hand-authored dataset fixes both at once.
+- **Show and host names need a polish pass.** Drawn from well-known day-parts, but line-ups shift and the API does not expose schedules. Affects realism, not any measure the study takes.
+- **The now-playing marquee.** `shouldMarquee` triggers above 30 characters, which catches 3 of the 65 show titles. Two of those three are morning shows, so at the pinned 9:20am the home station's title (`Elvis Duran and the Morning Show`, 32 chars) scrolls continuously as the participant's first impression. The non-marquee branch already ellipsises with a fade, which reads better. Left as-is because it is a design call, not a defect.
 
 ### Fixed
 
-- Host surfaced in the cell subtitle. It is the only per-cell value that varies down a row, so it is what makes the time axis worth reading. The station tagline that used to sit there repeated identically in every cell of a row, and the station is already identified by the pinned logo column.
+- **Lineup replaced.** Thirteen public radio stations spanning alternative, indie, folk, americana, jazz and news, with no Top 40, country, hip hop or mainstream pop, swapped for the real New York dial. The old lineup could not have satisfied any mainstream-format task, and would have turned the study's head-to-head into a test of an unfamiliar catalog rather than of the layout.
+- **Schedules are fixed, not generated.** `generateSchedule` used `Math.random()` for durations and hosts. Measured across six loads, one station's schedule varied between 8 and 12 blocks with different boundaries every time, so no two participants would have seen the same grid. A second bug went with it: titles were drawn from a per-genre list by array index rather than by clock, so a station showed "Evening Alt" at lunchtime.
+- **Row order is the dial.** FM ascending by frequency, then AM. The "Default" sort option used to fall through to a name sort, which both overrode the dial order and made "Default" and "A-Z" in the Sort sheet behave identically, so two of the four controls did the same thing.
+- **Host surfaced in the cell subtitle.** It is the only per-cell value that varies down a row, so it is what makes the time axis worth reading. The station tagline that used to sit there repeated identically in every cell of a row, and the station is already identified by the pinned logo column.
+- **Home station seeded.** The participant starts on Z100, playing and pre-favorited, because Task 5 asks them to return to "the station you usually listen to" and that has nothing to measure unless they arrived with one.
+- **Orphaned assets removed.** The thirteen public radio logos went with the old lineup.
 
 ## Research
 

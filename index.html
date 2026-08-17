@@ -1,24 +1,11 @@
 <!DOCTYPE html>
 <html><head>
 <script>window.__resources = {
-  "wtmd": "assets/wtmd.png",
-  "kqed": "assets/kqed.png",
   "favAdd": "assets/favAdd.png",
-  "wumb": "assets/wumb.png",
-  "wwoz": "assets/wwoz.png",
-  "kexp": "assets/kexp.png",
-  "kcrw": "assets/kcrw.png",
   "favRemove": "assets/favRemove.png",
   "adGerber": "assets/adGerber.png",
-  "wwfm": "assets/wwfm.png",
-  "radioparadise": "assets/radioparadise.png",
-  "wxpn": "assets/wxpn.png",
   "adHeinz": "assets/adHeinz.png",
   "adNespresso": "assets/adNespresso.png",
-  "wbez": "assets/wbez.png",
-  "current": "assets/current.png",
-  "wfuv": "assets/wfuv.png",
-  "wnyc": "assets/wnyc.png",
   "https://unpkg.com/react@18.3.1/umd/react.production.min.js": "vendor/react.js",
   "https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js": "vendor/react-dom.js"
 };</script>
@@ -43,6 +30,7 @@
 
 
 
+<script src="data/stations.js"></script>
 <script src="vendor/dc-runtime.js"></script>
 <title>Live Radio Dial</title>
 </head>
@@ -375,29 +363,9 @@ class Component extends DCLogic {
     return d;
   }
 
-  stationData = [
-    { stationuuid: '9610a044-0601-11e8-ae97-52543be04c81', name: 'Radio Paradise', url_resolved: 'https://stream.radioparadise.com/aac-320', homepage: 'https://radioparadise.com/', tags: 'rock,eclectic,alternative', country: 'United States', state: 'California', city: 'Paradise', description: 'Eclectic music from Paradise' },
-    { stationuuid: 'kcrw-899', name: 'WFUV 90.7 FM', url_resolved: 'https://onair.wfuv.org/onair-hi', homepage: 'https://www.wfuv.org/', tags: 'alternative,folk,americana,indie', country: 'United States', state: 'New York', city: 'New York City', description: 'Public Radio from Fordham University' },
-    { stationuuid: 'wxpn-fm-889', name: 'WXPN 88.5 FM', url_resolved: 'https://wxpnhi.xpn.org/xpnhi', homepage: 'https://www.xpn.org/', tags: 'alternative,adult alternative,indie', country: 'United States', state: 'Pennsylvania', city: 'Philadelphia', description: "Philadelphia's Music Discovery" },
-    { stationuuid: 'kutx-fm-987', name: 'KEXP 90.3 FM', url_resolved: 'https://kexp-mp3-128.streamguys1.com/kexp128.mp3', homepage: 'https://www.kexp.org/', tags: 'alternative,indie,rock,eclectic', country: 'United States', state: 'Washington', city: 'Seattle', description: 'Where the Music Matters' },
-    { stationuuid: '9604eeb3-0601-11e8-ae97-52543be04c81', name: 'The Current', url_resolved: 'https://current.stream.publicradio.org/current.mp3', homepage: 'https://www.thecurrent.org/', tags: 'alternative,indie,rock', country: 'United States', state: 'Minnesota', city: 'St. Paul', description: 'The Soundtrack to Your Life' },
-    { stationuuid: '961fb4ba-0601-11e8-ae97-52543be04c81', name: 'WWOZ New Orleans', url_resolved: 'https://wwoz-sc.streamguys1.com/wwoz-hi.mp3', homepage: 'https://www.wwoz.org/', tags: 'jazz,blues,new orleans', country: 'United States', state: 'Louisiana', city: 'New Orleans', description: 'New Orleans Music & Culture' },
-    { stationuuid: '960f8676-0601-11e8-ae97-52543be04c81', name: 'WTMD', url_resolved: 'https://wtmd.streamguys1.com/wtmd', homepage: 'https://wtmd.org/', tags: 'alternative,indie,rock', country: 'United States', state: 'Maryland', city: 'Baltimore', description: "Baltimore's Alternative" },
-    { stationuuid: '962082da-0601-11e8-ae97-52543be04c81', name: 'WUMB', url_resolved: 'https://wumb.streamguys1.com/wumb919fast', homepage: 'https://www.wumb.org/', tags: 'folk,americana,bluegrass', country: 'United States', state: 'Massachusetts', city: 'Boston', description: "America's Home for Folk Music" },
-    { stationuuid: 'wnyc-fm-939', name: 'WNYC FM 93.9', url_resolved: 'https://fm939.wnyc.org/wnycfm', homepage: 'https://www.wnyc.org/', tags: 'news,talk,public radio', country: 'United States', state: 'New York', city: 'New York', description: 'New York Public Radio' },
-    { stationuuid: 'wbez-915', name: 'WBEZ 91.5 Chicago', url_resolved: 'https://stream.wbez.org/wbez128.mp3', homepage: 'https://www.wbez.org/', tags: 'news,talk,public radio', country: 'United States', state: 'Illinois', city: 'Chicago', description: 'Chicago Public Media' },
-    { stationuuid: 'kqed-fm-88', name: 'KQED FM 88.5', url_resolved: 'https://streams.kqed.org/kqedradio', homepage: 'https://www.kqed.org/', tags: 'news,talk,public radio', country: 'United States', state: 'California', city: 'San Francisco', description: "The Bay Area's NPR Station" },
-    { stationuuid: 'knkx-fm-883', name: 'WWFM The Jazz Station', url_resolved: 'https://wwfm.streamguys1.com/live-mp3', homepage: 'https://www.wwfm.org/', tags: 'jazz,blues,classical', country: 'United States', state: 'New Jersey', city: 'Trenton', description: 'The Jazz Station' },
-    { stationuuid: 'wfuv-fm-907', name: 'WMOT Roots Radio', url_resolved: 'https://playerservices.streamtheworld.com/api/livestream-redirect/WMOTFM.mp3', homepage: 'https://www.wmot.org/', tags: 'americana,folk,bluegrass', country: 'United States', state: 'Tennessee', city: 'Murfreesboro', description: 'Roots Radio' }
-  ];
-  artworkMap = {
-    'kutx-fm-987': window.__resources.kexp, 'kqed-fm-88': window.__resources.kqed,
-    '9604eeb3-0601-11e8-ae97-52543be04c81': window.__resources.current, 'wbez-915': window.__resources.wbez,
-    'wnyc-fm-939': window.__resources.wnyc, '960f8676-0601-11e8-ae97-52543be04c81': window.__resources.wtmd,
-    '961fb4ba-0601-11e8-ae97-52543be04c81': window.__resources.wwoz, '962082da-0601-11e8-ae97-52543be04c81': window.__resources.wumb,
-    '9610a044-0601-11e8-ae97-52543be04c81': window.__resources.radioparadise, 'kcrw-899': window.__resources.kcrw,
-    'wxpn-fm-889': window.__resources.wxpn, 'knkx-fm-883': window.__resources.wwfm, 'wfuv-fm-907': window.__resources.wfuv
-  };
+  // Station lineup and fixed schedules live in data/stations.js, loaded
+  // before this script. See the header comment there for provenance.
+  stationData = window.LRD_STATIONS;
   adImages = [window.__resources.adHeinz, window.__resources.adNespresso, window.__resources.adGerber];
 
   constructor(props) {
@@ -405,8 +373,17 @@ class Component extends DCLogic {
     const stations = this.buildStations();
     let favorites = new Set();
     try { const s = localStorage.getItem('favoriteStations'); if (s) favorites = new Set(JSON.parse(s)); } catch (e) {}
+
+    // The participant is treated as already loyal to one station: it starts
+    // playing and starts favorited. Task 5 of the study asks them to get back to
+    // "the station you usually listen to" after exploring, which has nothing to
+    // measure unless they arrived with one. Falls back to the first row if the
+    // configured id is not in the lineup.
+    const home = stations.find(s => s.id === window.LRD_HOME_STATION) || stations[0];
+    if (home && !favorites.size) favorites.add(home.id);
+
     const now = this.now();
-    const first = stations[0];
+    const first = home;
     const show = first ? this.currentShowFor(first, now) : null;
     this.state = {
       stations,
@@ -424,74 +401,50 @@ class Component extends DCLogic {
   }
 
   // ---- data building ----
-  generateSchedule(name, tags) {
-    const showTemplates = {
-      rock: ['Morning Rock','Classic Rock Hour','Rock Drive','Hard Rock Evening','Late Night Rock','Rock Anthems'],
-      jazz: ['Morning Jazz','Jazz Café','Smooth Jazz Hour','Evening Standards','Late Night Jazz','Jazz Sessions'],
-      classical: ['Morning Classical','Classical Masterpieces','Afternoon Symphony','Evening Concerto','Night Serenade','Classical Hour'],
-      news: ['Morning News','Midday Update','Afternoon Headlines','Evening News','Night Report','News Roundup'],
-      talk: ['Morning Talk','Discussion Hour','Afternoon Conversation','Talk Drive','Evening Show','Late Night Talk'],
-      indie: ['Indie Morning','Alternative Hour','Indie Afternoon','Drive Time Indie','Evening Sessions','Late Night Indie'],
-      blues: ['Blues Morning','Delta Blues','Blues Afternoon','Blues Drive','Evening Blues','Midnight Blues'],
-      folk: ['Folk Morning','Acoustic Hour','Folk Tales','Drive Time Folk','Evening Ballads','Night Songs'],
-      alternative: ['Alt Morning','Alternative Hour','Afternoon Alt','Drive Time Alt','Evening Alt','Late Night Alt'],
-      americana: ['Americana Morning','Roots Hour','Americana Afternoon','Drive Time Roots','Evening Americana','Night Roots'],
-      default: ['Morning Show','Midday Mix','Afternoon Program','Drive Time','Evening Session','Late Night']
-    };
-    const hostNames = ['DJ Alex','Sarah Mitchell','Mike Johnson','Lisa Chen','David Martinez','Emma Rodriguez','Chris Anderson','Maya Patel','Ryan Thompson','Sophie Kim','James Wilson','Olivia Taylor','Marcus Brown','Zoe Davis','Tyler Scott','Hannah Lee','Jordan White','Ava Martin','Noah Garcia','Mia Robinson'];
-    const tagList = tags.split(',').map(t => t.trim().toLowerCase()).filter(Boolean);
-    let primary = 'default';
-    for (const t of tagList) { if (showTemplates[t]) { primary = t; break; } }
-    const templates = showTemplates[primary] || showTemplates.default;
-    const shows = [];
-    let hour = 8; const end = 24; let ti = 0;
-    while (hour < end) {
-      const r = Math.random();
-      let dur = r < 0.5 ? 1 : r < 0.8 ? 2 : r < 0.95 ? 3 : 4;
-      if (hour + dur > end) dur = end - hour;
-      shows.push({
-        id: `${name}-${hour}`, title: templates[ti % templates.length],
-        startTime: `${String(hour).padStart(2,'0')}:00`, endTime: `${String(hour+dur).padStart(2,'0')}:00`,
-        host: hostNames[Math.floor(Math.random()*hostNames.length)]
-      });
-      hour += dur; ti++;
-    }
-    return shows;
+  // Fixed schedules, read straight from data/stations.js. This replaces a
+  // generator that used Math.random() for durations and hosts, which meant no
+  // two participants saw the same grid and neither did one participant across
+  // a reload. Day-parts in the data match the clock, so titles no longer
+  // desync from the hour they sit in.
+  scheduleFor(station) {
+    return (station.shows || []).map(sh => ({
+      id: `${station.id}-${sh.start}`,
+      title: sh.title,
+      host: sh.host,
+      startTime: `${String(sh.start).padStart(2,'0')}:00`,
+      endTime: `${String(sh.end).padStart(2,'0')}:00`,
+    }));
   }
-  primaryGenre(tags) {
-    const t = tags.split(',').map(x => x.trim()).filter(Boolean);
-    if (t.length) return t[0].charAt(0).toUpperCase() + t[0].slice(1);
-    return 'Radio';
-  }
-  formatLocation(country, state, city) {
-    const abbr = {'Alabama':'AL','Alaska':'AK','Arizona':'AZ','Arkansas':'AR','California':'CA','Colorado':'CO','Connecticut':'CT','Delaware':'DE','Florida':'FL','Georgia':'GA','Hawaii':'HI','Idaho':'ID','Illinois':'IL','Indiana':'IN','Iowa':'IA','Kansas':'KS','Kentucky':'KY','Louisiana':'LA','Maine':'ME','Maryland':'MD','Massachusetts':'MA','Michigan':'MI','Minnesota':'MN','Mississippi':'MS','Missouri':'MO','Montana':'MT','Nebraska':'NE','Nevada':'NV','New Hampshire':'NH','New Jersey':'NJ','New Mexico':'NM','New York':'NY','North Carolina':'NC','North Dakota':'ND','Ohio':'OH','Oklahoma':'OK','Oregon':'OR','Pennsylvania':'PA','Rhode Island':'RI','South Carolina':'SC','South Dakota':'SD','Tennessee':'TN','Texas':'TX','Utah':'UT','Vermont':'VT','Virginia':'VA','Washington':'WA','West Virginia':'WV','Wisconsin':'WI','Wyoming':'WY'};
-    if (country === 'United States' && city && state) return `${city}, ${abbr[state] || state}`;
-    if (state && state.trim()) return `${state}, ${country}`;
-    return country;
-  }
-  isMusicStation(tags) {
-    const lt = tags.toLowerCase();
-    const news = ['news','talk','public radio','npr'].some(k => lt.includes(k));
-    const music = ['rock','jazz','blues','indie','alternative','folk','americana','eclectic','pop','electronic','hip-hop','country','classical'].some(k => lt.includes(k));
-    if (news && !music) return false;
-    if (music) return true;
-    return true;
+  isMusicStation(genre) {
+    const g = (genre || '').toLowerCase();
+    return !['news', 'talk', 'sports', 'public radio'].some(k => g.includes(k));
   }
   buildStations() {
+    // Genre, location, logo and stream all come straight from the data file now.
+    // They used to be derived: genre from the first freeform tag, location from
+    // country/state/city, logo from a uuid lookup. The data is authoritative
+    // (pulled from iHeart's live API), so deriving it would only lose fidelity.
     const list = this.stationData.map(rb => {
-      const shows = this.generateSchedule(rb.name, rb.tags);
-      const m = rb.name.match(/(\d+\.\d+)\s*(?:FM|MHz)/i);
+      const m = (rb.dial || '').match(/(\d+(?:\.\d+)?)/);
       return {
-        id: rb.stationuuid, name: rb.name,
-        logo: this.artworkMap[rb.stationuuid] || window.__resources.radioparadise,
-        genre: this.primaryGenre(rb.tags),
-        location: this.formatLocation(rb.country, rb.state, rb.city),
-        shows, streamUrl: rb.url_resolved, homepage: rb.homepage,
-        tags: rb.tags, description: rb.description,
+        id: rb.id, name: rb.name, logo: rb.logo,
+        genre: rb.genre, location: rb.location,
+        dial: rb.dial, callLetters: rb.callLetters,
+        shows: this.scheduleFor(rb),
+        streamUrl: rb.stream, homepage: rb.homepage,
+        description: rb.description,
         frequency: m ? parseFloat(m[1]) : undefined
       };
     });
-    list.sort((a, b) => a.name.localeCompare(b.name));
+    // Dial order, not alphabetical. A radio dial is the mental model the whole
+    // design borrows from, and sorting FM before AM then by frequency is how a
+    // listener scans one. Alphabetical put "103.5 KTU" next to "106.7 Lite FM"
+    // and buried Z100 at the bottom.
+    list.sort((a, b) => {
+      const band = (s) => /AM/i.test(s.dial || '') ? 1 : 0;
+      if (band(a) !== band(b)) return band(a) - band(b);
+      return (a.frequency || 0) - (b.frequency || 0);
+    });
     return list;
   }
   currentShowFor(station, now) {
@@ -568,9 +521,14 @@ class Component extends DCLogic {
     let f = [...stations];
     if (filters.location) f = f.filter(s => s.location === filters.location);
     if (filters.genre) f = f.filter(s => s.genre === filters.genre);
-    if (filters.sort === 'z-a') f.sort((a,b)=>b.name.localeCompare(a.name));
+    // "Default" preserves the dial order established in buildStations (FM by
+    // frequency, then AM). It used to fall through to a name sort, which had two
+    // bad effects: it silently overrode the dial order, and it made the Sort
+    // sheet's "Default" and "A-Z" options behave identically, so two of the four
+    // controls did the same thing.
+    if (filters.sort === 'a-z') f.sort((a,b)=>a.name.localeCompare(b.name));
+    else if (filters.sort === 'z-a') f.sort((a,b)=>b.name.localeCompare(a.name));
     else if (filters.sort === 'frequency') f.sort((a,b)=>{ if(a.frequency===undefined&&b.frequency===undefined)return 0; if(a.frequency===undefined)return 1; if(b.frequency===undefined)return -1; return a.frequency-b.frequency; });
-    else f.sort((a,b)=>a.name.localeCompare(b.name));
     return f;
   }
   tryPlay() { if (!this.audio) return; const p = this.audio.play(); if (p && p.catch) p.catch(()=>{}); }
@@ -658,7 +616,7 @@ class Component extends DCLogic {
     const title = curShow ? curShow.title : '';
     const artist = curStation ? curStation.name : '';
     const artwork = curStation ? curStation.logo : '';
-    const isMusic = curStation ? this.isMusicStation(curStation.tags || '') : true;
+    const isMusic = curStation ? this.isMusicStation(curStation.genre) : true;
     const shouldMarquee = (title || '').length > 30;
 
     // filters

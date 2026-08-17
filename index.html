@@ -345,6 +345,36 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script="" data-props="{&quot;$preview&quot;: {&quot;width&quot;: 430, &quot;height&quot;: 900}, &quot;accentColor&quot;: {&quot;editor&quot;: &quot;color&quot;, &quot;default&quot;: &quot;#c6002b&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;options&quot;: [&quot;#c6002b&quot;, &quot;#1d4ed8&quot;, &quot;#047857&quot;, &quot;#7c3aed&quot;, &quot;#db2777&quot;], &quot;section&quot;: &quot;Theme&quot;}, &quot;showAd&quot;: {&quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: false, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;Behavior&quot;}, &quot;autoPlay&quot;: {&quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: false, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;Behavior&quot;}}">
 class Component extends DCLogic {
+  // ---- research build configuration ----
+  // Flip these back to the demo defaults (adsEnabled/externalLinks true,
+  // pinnedNow null) for a sales or stakeholder demo. They are set for
+  // unmoderated research, where every participant must see the same thing.
+  static RESEARCH = {
+    // A fixed wall clock for the whole app. Without this the grid renders only
+    // from the real current hour to 11pm, so a 10am participant sees thirteen
+    // columns and a 9pm participant sees two, which caps the study's primary
+    // exploration measure by time of day. Format: [hour, minute], 24h.
+    pinnedNow: [9, 20],
+    // setupAds otherwise starts a cycle 30s after load regardless of the
+    // showAd prop: a 300x250 appears, rotates every 10s, hides after 30, and
+    // returns 120s later. Roughly ten interruptions over a 25-minute session.
+    adsEnabled: false,
+    // "Go to Station" otherwise window.opens the station homepage, stranding
+    // an unmoderated participant on an external site with no way back.
+    externalLinks: false,
+  };
+
+  // Single source of truth for "now". Everything that used to call new Date()
+  // routes through here so the pinned clock cannot be bypassed in one place
+  // and silently reintroduce the time-of-day confound.
+  now() {
+    const pin = Component.RESEARCH.pinnedNow;
+    if (!pin) return new Date();
+    const d = new Date();
+    d.setHours(pin[0], pin[1], 0, 0);
+    return d;
+  }
+
   stationData = [
     { stationuuid: '9610a044-0601-11e8-ae97-52543be04c81', name: 'Radio Paradise', url_resolved: 'https://stream.radioparadise.com/aac-320', homepage: 'https://radioparadise.com/', tags: 'rock,eclectic,alternative', country: 'United States', state: 'California', city: 'Paradise', description: 'Eclectic music from Paradise' },
     { stationuuid: 'kcrw-899', name: 'WFUV 90.7 FM', url_resolved: 'https://onair.wfuv.org/onair-hi', homepage: 'https://www.wfuv.org/', tags: 'alternative,folk,americana,indie', country: 'United States', state: 'New York', city: 'New York City', description: 'Public Radio from Fordham University' },
@@ -375,7 +405,7 @@ class Component extends DCLogic {
     const stations = this.buildStations();
     let favorites = new Set();
     try { const s = localStorage.getItem('favoriteStations'); if (s) favorites = new Set(JSON.parse(s)); } catch (e) {}
-    const now = new Date();
+    const now = this.now();
     const first = stations[0];
     const show = first ? this.currentShowFor(first, now) : null;
     this.state = {
@@ -489,7 +519,7 @@ class Component extends DCLogic {
     if (cur && cur.streamUrl) { this.audio.src = cur.streamUrl; }
     if (this.props.autoPlay && cur && cur.streamUrl) { this.tryPlay(); }
 
-    this.timers.push(setInterval(() => this.setState({ currentTime: new Date() }), 60000));
+    this.timers.push(setInterval(() => this.setState({ currentTime: this.now() }), 60000));
     this._onScroll = () => { const s = window.scrollY > 10; if (s !== this.state.scrolledY) this.setState({ scrolledY: s }); };
     window.addEventListener('scroll', this._onScroll, { passive: true });
     this.setupAds();
@@ -515,6 +545,7 @@ class Component extends DCLogic {
   }
 
   setupAds() {
+    if (!Component.RESEARCH.adsEnabled) return;
     const rotate = () => this.setState(s => ({ adIndex: Math.min(s.adIndex + 1, this.adImages.length - 1) }));
     if (this.props.showAd) { this.setState({ adVisible: true, adIndex: 0 }); this.adRotTimer = setInterval(rotate, 3000); return; }
     const startCycle = () => {
@@ -548,7 +579,7 @@ class Component extends DCLogic {
   onPlayPause = () => { if (this.state.isPlaying) { this.audio && this.audio.pause(); } else { this.tryPlay(); } };
   setStation(station, autoplay) {
     if (!station) return;
-    const show = this.currentShowFor(station, new Date());
+    const show = this.currentShowFor(station, this.now());
     this.setState({ currentStationId: station.id, currentShowId: show ? show.id : null });
     if (this.audio && station.streamUrl) { this.audio.src = station.streamUrl; if (autoplay) this.tryPlay(); }
   }
@@ -558,7 +589,7 @@ class Component extends DCLogic {
     this.setState({ currentStationId: stationId, currentShowId: showId });
     if (this.audio && station.streamUrl) {
       this.audio.src = station.streamUrl;
-      const h = new Date().getHours();
+      const h = this.now().getHours();
       const sh = parseInt(show.startTime.split(':')[0]), eh = parseInt(show.endTime.split(':')[0]);
       const airing = h >= sh && h < eh;
       if (!this.state.isPlaying && airing) this.timers.push(setTimeout(() => this.tryPlay(), 300));
@@ -576,7 +607,7 @@ class Component extends DCLogic {
   openFilter = () => this.setState({ activeSheet: 'filter', filterPage: 'main' });
   openMediaMenu = () => this.setState({ activeSheet: 'media-menu' });
   closeSheet = () => this.setState({ activeSheet: null });
-  onGoToStation = () => { const st = this.getStation(this.state.currentStationId); if (st && st.homepage) window.open(st.homepage, '_blank'); this.closeSheet(); };
+  onGoToStation = () => { const st = this.getStation(this.state.currentStationId); if (Component.RESEARCH.externalLinks && st && st.homepage) window.open(st.homepage, '_blank'); this.closeSheet(); };
 
   renderVals() {
     const { stations, filters, currentTime, currentStationId, currentShowId, favorites,
@@ -609,7 +640,11 @@ class Component extends DCLogic {
         const span = eh - sh; const width = span===1 ? 210 : (210*span)+(8*(span-1));
         cells.push({
           isShow:true, isEmpty:false, width, key:`${station.id}-${show.id}`,
-          title: show.title, subtitle: `${station.name} • ${station.description || station.genre}`,
+          // Host first: it is the only per-cell signal that varies down a row,
+          // so it is what makes the time axis worth reading. The station tagline
+          // that used to sit here repeated identically in every cell of a row,
+          // and the station is already identified by the pinned logo column.
+          title: show.title, subtitle: `${show.host ? show.host + ' • ' : ''}${station.name}`,
           isPlaying: currentStationId===station.id && currentShowId===show.id,
           onClick: () => this.selectShow(station.id, show.id)
         });

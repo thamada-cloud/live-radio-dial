@@ -48,13 +48,28 @@ The EPG mechanics are real: cell width is proportional to show duration (210px p
 
 Three discovery mechanisms coexist on the one screen: scanning the grid, the Previous/Next buttons in the media pill (which cycle stations), and the Filter sheet (Location, Genre, Sort).
 
-Known gaps, in priority order. The first two block the planned study:
+### Research build configuration
 
-1. **Lineup is not iHeart.** Thirteen public radio stations (KEXP, WFUV, WWOZ, WNYC, KQED and similar), spanning alternative, indie, folk, americana, jazz and news. No Top 40, country, hip hop or mainstream pop.
-2. **Schedules are randomly generated per page load.** `generateSchedule` uses `Math.random()` for durations and hosts, so every visitor sees a different grid. Two knock-on effects: show titles cycle through a genre template list by index rather than by clock, so a station can show "Late Night Rock" at 9am; and the generated host names are never displayed, because the cell subtitle renders station name and description instead.
-3. **The grid only renders from the current hour to 11pm.** A 10am visitor sees thirteen columns, a 9pm visitor sees two.
-4. **Ads fire regardless of the `showAd` prop.** `setupAds` starts its cycle 30 seconds after load either way: a 300x250 appears, rotates every 10 seconds, hides after 30, returns after 120.
-5. **Go to Station calls `window.open`** on the station homepage, navigating the user out of the prototype.
+`Component.RESEARCH` at the top of the component class holds three flags, set for unmoderated research rather than for demoing. Flip them back (`adsEnabled` and `externalLinks` to `true`, `pinnedNow` to `null`) for a stakeholder demo.
+
+| Flag | Set to | Why |
+| :-- | :-- | :-- |
+| `pinnedNow` | `[9, 20]` | Pins the wall clock to 9:20am. Everything reads it through `now()`. Without it the grid renders only from the real current hour to 11pm, so a 10am participant sees thirteen columns and a 9pm participant sees two, capping the study's primary exploration measure by time of day. |
+| `adsEnabled` | `false` | `setupAds` otherwise starts a cycle 30s after load regardless of the `showAd` prop, which is roughly ten interruptions over a 25-minute session. |
+| `externalLinks` | `false` | "Go to Station" otherwise `window.open`s the station homepage, stranding a participant on an external site. |
+
+### Still outstanding
+
+Two blockers remain, and both need a decision before they can be built:
+
+1. **Lineup is not iHeart.** Thirteen public radio stations (KEXP, WFUV, WWOZ, WNYC, KQED and similar), spanning alternative, indie, folk, americana, jazz and news. No Top 40, country, hip hop or mainstream pop. Blocked on the national-mix versus single-market decision.
+2. **Schedules are randomly generated per page load.** `generateSchedule` uses `Math.random()` for durations and hosts, so no two participants see the same grid and neither does one participant across a reload. Measured across six loads, a single station's schedule varied between 8 and 12 blocks with different boundaries every time.
+
+   A second bug rides along with it: show titles are drawn from a per-genre template list by array index rather than by clock, so the names desync from the time they sit in. At the pinned 9:20am, KEXP runs "Alternative Hour", then "Afternoon Alt", "Drive Time Alt", and "Evening Alt" by early afternoon. Replacing generation with a fixed hand-authored dataset fixes both at once.
+
+### Fixed
+
+- Host surfaced in the cell subtitle. It is the only per-cell value that varies down a row, so it is what makes the time axis worth reading. The station tagline that used to sit there repeated identically in every cell of a row, and the station is already identified by the pinned logo column.
 
 ## Research
 

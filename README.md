@@ -101,3 +101,12 @@ The horizontal dimension is the harsher constraint. Twelve rows scroll comfortab
 ## Research
 
 The study plan that drives the backlog above lives outside this repo, at `~/.claude/plans/i-need-you-to-serialized-hummingbird.md`.
+
+### Why `.nojekyll` matters
+
+GitHub Pages runs Jekyll over a branch build by default, and Jekyll breaks this project two separate ways:
+
+1. `index.html` is full of `{{ ... }}` bindings, which is also Liquid's tag syntax. Jekyll tries to parse them as template tags and the build fails.
+2. Jekyll's default excludes contain `vendor/`, so React and the DC runtime would be dropped from the published site even if the build succeeded, serving a blank page.
+
+The empty `.nojekyll` file at the repo root disables Jekyll and publishes the tree verbatim. Do not delete it.

@@ -110,3 +110,19 @@ GitHub Pages runs Jekyll over a branch build by default, and Jekyll breaks this 
 2. Jekyll's default excludes contain `vendor/`, so React and the DC runtime would be dropped from the published site even if the build succeeded, serving a blank page.
 
 The empty `.nojekyll` file at the repo root disables Jekyll and publishes the tree verbatim. Do not delete it.
+
+### Icons
+
+All icons come from the iHeartRadio iOS app's own asset catalog (`iheartradio/Apple`, `Multiplatform/Resources/Assets.xcassets`), which ships them as SVG. They replace the generic Lucide stroke icons the Claude Design export came with, so the prototype now looks like the app participants are being asked to compare it against.
+
+Three things had to be handled when porting them:
+
+- The SVGs carry an inline `style="fill:...;fill:color(display-p3 ...)"` that overrides the `fill` attribute. Both are stripped and replaced with `currentColor` so icons inherit colour on the light header and the dark media pill.
+- `talkback`, `playback_play` and `playback_pause` ship as composites: a filled disc with the glyph knocked out. The prototype draws its own red talkback circle and white play button, so only the inner glyph is used, with the viewBox tightened around it.
+- viewBoxes are not uniform (14, 16, 20, 24, 25, 32, 36, 44, 46). Each icon keeps its own. `navigation_back` sits small inside a 44x44 box and needed cropping to `14 14 16 16`; `preset_add` fills its 14x14 box edge to edge and needed padding to `-5 -5 24 24`.
+
+Like and dislike previously toggled via `fill="{{ likeFill }}"`. That cannot work with iOS glyphs, whose outline variants are themselves filled shapes rather than strokes, so the template now switches between `thumbs_up` / `thumbs_up_filled` with `sc-if` on the existing `liked` state.
+
+`dial_button_icon` (Go to Station) deliberately keeps its brand red disc and white triangle rather than inheriting `currentColor`, which would flatten it into a solid blob.
+
+**The filter icon is the one exception.** The iOS app has no filter icon in its catalog and uses no filter SF Symbol, so there was nothing to copy. The glyph in the header is drawn to match the set's weight (2px bars, 1px radius, 24x24). Worth knowing that the filter control itself has no counterpart in the shipping app.

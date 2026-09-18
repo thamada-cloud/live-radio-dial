@@ -6,7 +6,7 @@
 <title>Live Radio Dial v2</title>
 <script src="data/stations.js"></script>
 <script src="data/stations-us.js"></script>
-<script src="data/schedule.js"></script>
+<script src="data/onair.js"></script>
 <style>
   /* Design tokens, as named in the Figma file (Live-Radio-Dial-v2, node 314:13377) */
   :root{
@@ -101,12 +101,12 @@
   .guide{display:flex;flex-direction:column;gap:8px}
   .station{display:flex;gap:8px;align-items:center}
   .station .logo{
-    width:66px;height:66px;flex-shrink:0;border-radius:var(--radius-primary);
+    width:48px;height:48px;flex-shrink:0;border-radius:var(--radius-primary);
     background:#fff;box-shadow:0 1px 3px 0 var(--surface-shadow);overflow:hidden;
   }
   .station .logo img{width:100%;height:100%;object-fit:cover}
   .station .row{
-    flex:1;min-width:0;height:66px;min-height:44px;display:flex;align-items:center;gap:8px;
+    flex:1;min-width:0;height:48px;min-height:44px;display:flex;align-items:center;gap:8px;
     background:var(--container-quaternary);border-radius:var(--radius-primary);
     padding:0 16px;border:2px solid transparent;text-align:left;
   }
@@ -337,15 +337,23 @@ const now = () => {
 };
 
 /* ---- time formatting: "7:00 - 8:00 AM", "10:00 AM - 2:00 PM" ---- */
-const h12 = (h) => (h % 12) || 12;
-const mer = (h) => (h % 24) < 12 ? 'AM' : 'PM';
+const h12 = (h) => { const x = Math.floor(h) % 12; return x === 0 ? 12 : x; };
+const mins = (h) => Math.round((h - Math.floor(h)) * 60);
+const mer = (h) => (Math.floor(h) % 24) < 12 ? 'AM' : 'PM';
+const clock = (h) => `${h12(h)}:${String(mins(h)).padStart(2, '0')}`;
 function timeRange(start, end) {
   return mer(start) === mer(end)
-    ? `${h12(start)}:00 - ${h12(end)}:00 ${mer(end)}`
-    : `${h12(start)}:00 ${mer(start)} - ${h12(end)}:00 ${mer(end)}`;
+    ? `${clock(start)} - ${clock(end)} ${mer(end)}`
+    : `${clock(start)} ${mer(start)} - ${clock(end)} ${mer(end)}`;
 }
-const showAt = (station, hour) =>
-  station.shows.find((s) => hour >= s.start && hour < s.end) || station.shows[0];
+// Blocks can wrap past midnight (22:00-02:00), so a plain start<=h<end test
+// misses the late-night show.
+function showAt(station, hour) {
+  return (station.shows || []).find((s) =>
+    s.start <= s.end ? (hour >= s.start && hour < s.end)
+                     : (hour >= s.start || hour < s.end)
+  ) || null;
+}
 
 /* ---- data ---- */
 function currentMarket() {
@@ -355,26 +363,19 @@ function currentMarket() {
 }
 
 function buildStations() {
-  // Hand-authored schedules win where they exist; everything else is
-  // deterministic (see data/schedule.js). Matched on the API station id.
-  const curated = {};
-  (window.LRD_STATIONS || []).forEach((s) => { if (s.apiId) curated[s.apiId] = s; });
-
   const ids = window.LRD_US.lineups[state.marketId] || [];
   const label = currentMarket().label;
 
   return ids.map((id) => {
     const s = window.LRD_US.stations[id];
     if (!s) return null;
-    const c = curated[id];
     const st = {
-      id: `s${id}`, apiId: id, name: s.name, dial: s.dial,
-      callLetters: s.call,
-      genre: c ? c.genre : s.genre,
-      description: c ? c.description : s.desc,
-      logo: s.logo, stream: s.stream, location: label,
-      shows: c && c.shows ? c.shows : window.LRD_buildSchedule({ id: `s${id}`, genre: s.genre }),
-      curated: !!c,
+      id: `s${id}`, apiId: id, name: s.name, dial: s.dial, callLetters: s.call,
+      genre: s.genre, description: s.desc, logo: s.logo, stream: s.stream,
+      location: label,
+      // Real schedule if the station publishes one, otherwise none. Nothing is
+      // generated: a made-up show name on a real station reads as a bug.
+      shows: (window.LRD_ONAIR[id] || []).map(([start, end, title]) => ({ start, end, title })),
     };
     const m = (st.dial || '').match(/(\d+(?:\.\d+)?)/);
     st.frequency = m ? parseFloat(m[1]) : 0;
@@ -663,7 +664,7 @@ function renderGuide() {
       <button class="row">
         <span class="metadata">
           <span class="show">${show ? show.title : st.name}</span>
-          <span class="when">${show ? timeRange(show.start, show.end) : st.dial}</span>
+          <span class="when">${show ? timeRange(show.start, show.end) : (st.description || st.genre)}</span>
         </span>
         <span class="more" role="button" aria-label="More options for ${st.name}">
           <img class="icon" src="assets/v2/row-overflow.svg" alt="">
@@ -697,7 +698,7 @@ function renderNowPlaying() {
   // is schedule-level, so this maps to show title then host and station. Wiring
   // a real now-playing track feed would fill the same two lines.
   $('npTitle').textContent = show ? show.title : st.name;
-  $('npSubtitle').textContent = show && show.host ? `${show.host} • ${st.name}` : st.name;
+  $('npSubtitle').textContent = show ? st.name : (st.description || st.genre);
   $('btnLike').setAttribute('aria-pressed', String(state.liked));
   $('btnDislike').setAttribute('aria-pressed', String(state.disliked));
 }

@@ -177,9 +177,18 @@ https://us.api.iheart.com/api/v2/content/liveStations?limit=200&marketId=<id>
 
 The file is 458KB, 140KB gzipped, which Pages serves compressed. Stations are stored as arrays and URLs are prefix-packed, because spelling out `https://playerservices.streamtheworld.com/api/livestream-redirect/` 532 times was most of the file. Both unpack once on load. Logos are hotlinked to iHeart's CDN rather than committed, since 2,721 logos is far too many and v2 already needs the network for audio. **v2 therefore needs a connection; v1 still runs fully offline.**
 
-**Schedules.** `data/stations.js` still holds hand-authored schedules for twelve New York stations, and those win. Everything else gets a schedule from `data/schedule.js`, which is a **pure function of the station id**: block boundaries come from one of four fixed patterns chosen by hashing the id, titles are indexed by day-part, hosts by hash. Reload a hundred times and the lineup is identical, so the comparability that mattered for the study is intact. The defect removed earlier was the randomness, not that the data was synthetic.
+**Schedules are real.** The show name and time on each row come from iHeart's own RadioEdit GraphQL API, the same `OnAirSchedule` query the iOS app runs:
 
-Each pattern has exactly five blocks, one per day-part, so a title can be picked by index. An earlier cut derived the day-part from the start hour, which made a station print "Rock & Roll Mornings" twice in a row whenever its pattern had two blocks before 10am.
+```
+POST https://webapi.radioedit.iheart.com/graphql
+query OnAirSchedule($id: String!, $dayOfWeek: SITES_ONAIR_DAY!, $timeZone: String!)
+```
+
+`id` is the call letters lowercased (`whtz-fm`). Fetched once for all 2,721 stations and baked into `data/onair.js` (179KB, 26KB gzipped) rather than called live: a study needs every participant to see the same thing, and the browser would otherwise make thousands of requests.
+
+933 stations publish a schedule. The other 1,788 return an empty one, and those rows fall back to the station's real name and description, which is what the production web radio-dial shows. **Nothing in the row is synthetic.** The earlier generated schedules are gone, along with `data/schedule.js`.
+
+This is also how the Figma frame was made: the "Crystal Rosas" in it is Z100's real 2pm host, straight out of this API.
 
 ### Filter sheets
 

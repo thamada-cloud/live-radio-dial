@@ -169,6 +169,10 @@ The Genre and Location chips open a bottom sheet listing every value, following 
 
 Both sheets build their options from `data/stations.js` rather than a hardcoded list, so adding stations from another market populates the Location sheet with no code change. Right now the lineup is a single market, so that sheet offers one value and says so.
 
+### Deliberate deviation from the frame
+
+The transport arrows are swapped relative to Figma node 314:13377, which puts the down chevron on the left and the up chevron on the right. The guide is a vertical list, so the left button (previous, moving up the list) points up and the right button (next, moving down) points down. Noted in the source so it does not get "fixed" back.
+
 ### Where the design and the data do not line up
 
 **The now-playing block is track-level in Figma** (a song title, then a list of artists) but the dataset is schedule-level. Those two lines currently show the show title, then host and station. A real now-playing feed would fill the same two lines with no layout change. Marked in the source.

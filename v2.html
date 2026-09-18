@@ -341,6 +341,9 @@
   .shelf .rail::-webkit-scrollbar{display:none}
   .tile{width:112px;flex-shrink:0;text-align:left;background:none;border:none;padding:0;display:block}
   .tile .art-box{
+    /* A span defaults to inline, which ignored the height and let tall logos
+       stretch the tile instead of being cropped to a square. */
+    display:block;
     position:relative;width:112px;height:112px;border-radius:var(--radius-primary);
     overflow:hidden;background:#fff;box-shadow:0 1px 3px 0 var(--surface-shadow);
   }
@@ -369,12 +372,42 @@
     margin:12px 0 4px;font-size:13px;line-height:18px;color:var(--on-surface-secondary);
   }
 
-  /* Empty states. Real app states rather than invented content: this prototype
-     has no podcast or playlist data, and inventing some would be the same
-     mistake as the generated schedules that were removed earlier. */
-  .empty-state{padding:48px 8px;text-align:center}
-  .empty-state h2{font-size:18px;line-height:24px;font-weight:600;margin-bottom:6px}
-  .empty-state p{font-size:14px;line-height:20px;color:var(--on-surface-secondary)}
+  /* Section header, the app's pattern of a title with a chevron affordance. */
+  .sec-title{font-size:18px;line-height:24px;font-weight:600;color:var(--on-surface-primary);margin:0 0 12px}
+  .shelf h2{display:flex;align-items:center;gap:6px}
+  .shelf h2 .chev{width:16px;height:16px;opacity:.5;transform:rotate(-90deg)}
+
+  /* Your Library row. */
+  .lib-row{display:flex;gap:12px;overflow-x:auto;scrollbar-width:none;margin:0 -16px;padding:0 16px}
+  .lib-row::-webkit-scrollbar{display:none}
+  .lib-card{
+    flex-shrink:0;display:flex;align-items:center;gap:8px;padding:12px 16px;
+    background:var(--container-quaternary);border-radius:10px;border:none;
+    font-size:14px;font-weight:600;color:var(--on-surface-primary);white-space:nowrap;
+  }
+  .lib-card svg{width:20px;height:20px;fill:currentColor}
+
+  /* Browse All grid on Search. */
+  .genre-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .genre-card{
+    height:72px;display:flex;align-items:flex-end;padding:10px 12px;border:none;
+    border-radius:10px;color:#fff;font-size:15px;font-weight:700;text-align:left;
+    background:var(--on-surface-primary);
+  }
+  .search-clear{padding:2px;border-radius:999px;flex-shrink:0}
+  .search-clear .icon{width:16px;height:16px;opacity:.6}
+
+  /* Honest placeholder for the two tabs with no data behind them. */
+  .tab-note{
+    padding:12px 14px;margin-bottom:16px;border-radius:10px;
+    background:var(--container-quaternary);
+    font-size:13px;line-height:19px;color:var(--on-surface-secondary);
+  }
+  .sec-list{list-style:none;display:flex;flex-direction:column;gap:2px}
+  .sec-list li{
+    padding:16px 4px;font-size:17px;font-weight:600;color:var(--on-surface-primary);
+    border-bottom:1px solid var(--hairline);
+  }
 
   .error{
     position:fixed;top:96px;left:50%;transform:translateX(-50%);z-index:60;
@@ -487,35 +520,47 @@
 
 <main class="page view" id="viewHome">
   <h1 class="screen-title">Home</h1>
-  <section class="shelf" id="shelfRecent"></section>
   <section class="shelf" id="shelfPresets"></section>
-  <section class="shelf" id="shelfMarket"></section>
+  <section class="shelf" id="shelfDial"></section>
+  <section class="shelf" id="shelfRecent"></section>
+  <section class="shelf" id="shelfLibrary"></section>
+  <section class="shelf" id="shelfTrending"></section>
+  <div class="tab-note" id="homeNote"></div>
 </main>
 
 <main class="page view" id="viewSearch">
-  <h1 class="screen-title">Search</h1>
   <div class="searchbar">
     <img class="icon" src="assets/v2/search.svg" alt="">
-    <input id="searchInput" type="search" placeholder="Stations, genres, cities" autocomplete="off">
+    <input id="searchInput" type="search" placeholder="Artists, stations, or podcasts" autocomplete="off">
+    <button class="search-clear" id="searchClear" aria-label="Clear" hidden>
+      <img class="icon" src="assets/v2/close.svg" alt="">
+    </button>
   </div>
-  <p class="search-hint" id="searchHint"></p>
+  <section id="searchLanding">
+    <section class="shelf" id="shelfHistory"></section>
+    <h2 class="sec-title">Browse All</h2>
+    <div class="genre-grid" id="genreGrid"></div>
+  </section>
+  <p class="search-hint" id="searchHint" hidden></p>
   <section class="guide" id="searchResults"></section>
 </main>
 
 <main class="page view" id="viewPodcasts">
   <h1 class="screen-title">Podcasts</h1>
-  <div class="empty-state">
-    <h2>No podcasts yet</h2>
-    <p>Podcasts you follow will show up here.</p>
-  </div>
+  <div class="tab-note">This prototype covers live radio. The sections below are the ones the app shows here.</div>
+  <ul class="sec-list">
+    <li>Continue listening</li><li>Featured podcasts</li><li>iHeart Podcast Network</li>
+    <li>Popular podcasts</li><li>Recommended for you</li><li>Topics</li>
+  </ul>
 </main>
 
 <main class="page view" id="viewPlaylists">
   <h1 class="screen-title">Playlists</h1>
-  <div class="empty-state">
-    <h2>No playlists yet</h2>
-    <p>Playlists you create or save will show up here.</p>
-  </div>
+  <div class="tab-note">This prototype covers live radio. The sections below are the ones the app shows here.</div>
+  <ul class="sec-list">
+    <li>Made for you</li><li>Recommended for you</li><li>Featured playlist</li>
+    <li>Moods &amp; activities</li><li>Decades</li><li>Playlist genres</li>
+  </ul>
 </main>
 
 
@@ -578,6 +623,7 @@ const state = {
   rowStation: null,
   view: 'radio',
   recent: [],
+  searches: [],
   filter: { chip: null, genre: null, location: null },
   sheet: null,
   sheetPage: 'main',
@@ -1266,19 +1312,98 @@ function shelf(host, title, list, sub) {
   host.append(h, rail);
 }
 
+/* Home follows the section order in iHeart/Home/HomeTabView.swift: presets, ad
+ * banner, radio dial, recently played, your library, trending, then top
+ * podcasts / playlists / artists. The ad banner is off in a research build, and
+ * the three "top" sections need podcast, playlist and artist data this
+ * prototype does not have, so they are named in a note rather than faked. */
 function renderHome() {
   const byId = (id) => state.stations.find((s) => s.id === id);
   const recent = state.recent.map(byId).filter(Boolean);
   const presets = state.stations.filter((s) => state.favorites.has(s.id));
   const market = currentMarket();
 
-  shelf($('shelfRecent'), 'Recently played', recent);
-  shelf($('shelfPresets'), 'Your presets', presets);
-  // Everything else in the market, minus what is already shown above.
-  const shown = new Set([...recent, ...presets].map((s) => s.id));
-  shelf($('shelfMarket'), `Live in ${market.label}`,
-        state.stations.filter((s) => !shown.has(s.id)).slice(0, 20),
-        (s) => s.dial);
+  shelf($('shelfPresets'), 'Your presets', presets, (s) => s.dial);
+  // The app puts a Radio Dial carousel on Home, which is the screen this
+  // prototype is about, so it links straight there.
+  shelf($('shelfDial'), `Radio dial`, state.stations.slice(0, 12), (s) => s.dial);
+  shelf($('shelfRecent'), 'Recently played', recent, (s) => s.dial);
+
+  // Your Library: a horizontal row of category cards in the app.
+  const lib = $('shelfLibrary');
+  lib.innerHTML = '<h2>Your library</h2>';
+  const row = document.createElement('div');
+  row.className = 'lib-row';
+  [['Stations', 'radio'], ['Podcasts', 'podcasts'], ['Playlists', 'playlists'], ['Music', 'search']]
+    .forEach(([label, icon]) => {
+      const b = document.createElement('button');
+      b.className = 'lib-card';
+      b.innerHTML = TAB_ICONS[icon] + `<span>${label}</span>`;
+      b.addEventListener('click', () => {
+        if (label === 'Stations') switchView('radio');
+        else if (label === 'Podcasts') switchView('podcasts');
+        else if (label === 'Playlists') switchView('playlists');
+        else switchView('search');
+      });
+      row.appendChild(b);
+    });
+  lib.appendChild(row);
+
+  const shown = new Set([...presets, ...recent].map((s) => s.id));
+  shelf($('shelfTrending'), `Trending in ${market.label}`,
+        state.stations.filter((s) => !shown.has(s.id)).slice(0, 20), (s) => s.genre);
+
+  $('homeNote').textContent =
+    'Top podcasts, top playlists and top artists also sit on this screen in the app. ' +
+    'They need data this prototype does not carry, so they are left out rather than filled with placeholders.';
+}
+
+/* Search mirrors iHeart/Search: a bar, then recent searches and a Browse All
+ * directory while idle, and results once you type. */
+function renderSearchLanding() {
+  const hist = $('shelfHistory');
+  hist.innerHTML = '';
+  if (state.searches.length) {
+    const h = document.createElement('h2');
+    h.textContent = 'Recent searches';
+    const rail = document.createElement('div');
+    rail.className = 'lib-row';
+    state.searches.forEach((q) => {
+      const b = document.createElement('button');
+      b.className = 'lib-card';
+      b.textContent = q;
+      b.addEventListener('click', () => {
+        $('searchInput').value = q;
+        renderSearch();
+      });
+      rail.appendChild(b);
+    });
+    hist.append(h, rail);
+  }
+
+  // Browse All, built from the genres actually present in the data.
+  const grid = $('genreGrid');
+  grid.innerHTML = '';
+  // "Default" and "Radio" are placeholders the API returns for stations with no
+  // genre set, not things anyone would browse by.
+  const JUNK = new Set(['Default', 'Radio', 'US Partner Digital']);
+  const genres = [...new Set(Object.values(window.LRD_US.stations).map((x) => x.genre))]
+    .filter((g) => g && !JUNK.has(g)).sort();
+  genres.slice(0, 16).forEach((g, i) => {
+    const b = document.createElement('button');
+    b.className = 'genre-card';
+    b.textContent = g;
+    // Spread the tint so the grid does not read as sixteen identical blocks.
+    b.style.background = `hsl(${(i * 47) % 360} 42% 32%)`;
+    b.addEventListener('click', () => { $('searchInput').value = g; renderSearch(); });
+    grid.appendChild(b);
+  });
+}
+
+function noteSearch(q) {
+  if (!q) return;
+  state.searches = [q, ...state.searches.filter((x) => x !== q)].slice(0, 8);
+  try { localStorage.setItem('lrdV2Searches', JSON.stringify(state.searches)); } catch (e) {}
 }
 
 function renderSearch() {
@@ -1287,10 +1412,15 @@ function renderSearch() {
   const hint = $('searchHint');
   host.innerHTML = '';
 
+  $('searchClear').hidden = !q;
   if (!q) {
-    hint.textContent = 'Search every live station in the US, not just this market.';
+    $('searchLanding').hidden = false;
+    hint.hidden = true;
+    renderSearchLanding();
     return;
   }
+  $('searchLanding').hidden = true;
+  hint.hidden = false;
   // Searches all 2,721 stations rather than the loaded market, which is the
   // point of having them. Picking one from another market switches to it.
   //
@@ -1395,6 +1525,8 @@ function render() {
     if (lib) state.library = new Set(JSON.parse(lib));
     const rec = localStorage.getItem('lrdV2Recent');
     if (rec) state.recent = JSON.parse(rec);
+    const sq = localStorage.getItem('lrdV2Searches');
+    if (sq) state.searches = JSON.parse(sq);
   } catch (e) {}
 
   // data/stations.js names the home station by its own id; resolve via apiId so
@@ -1420,6 +1552,10 @@ function render() {
   if (home && home.stream) audio.src = home.stream;
 
   $('searchInput').addEventListener('input', renderSearch);
+  $('searchInput').addEventListener('change', () => noteSearch($('searchInput').value.trim()));
+  $('searchClear').addEventListener('click', () => {
+    $('searchInput').value = ''; renderSearch(); $('searchInput').focus();
+  });
   $('scrim').addEventListener('click', closeSheet);
   $('sheetClose').addEventListener('click', closeSheet);
   $('sheetBack').addEventListener('click', () => { state.sheetPage = 'main'; renderSheet(); });

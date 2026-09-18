@@ -86,7 +86,8 @@
     /* Collapses out of the way on scroll down. max-height rather than transform
        so the space is actually reclaimed for rows, not just vacated. */
     max-height:56px;
-    transition:max-height .25s ease,opacity .2s ease,margin-top .25s ease;
+    transition:max-height .18s ease-out,opacity .14s ease-out,margin-top .18s ease-out;
+    will-change:max-height;
   }
   .chips.is-stowed{max-height:0;opacity:0;margin-top:0;pointer-events:none}
   @media (prefers-reduced-motion: reduce){ .chips{transition:none} }
@@ -907,30 +908,37 @@ function remainingIn(show, h) {
 function watchScroll() {
   const chips = $('chips');
   let last = window.scrollY;
+  let travel = 0;          // distance travelled since the last direction change
 
   // Deliberately not rAF-throttled. An earlier version set a `ticking` flag and
-  // cleared it inside requestAnimationFrame; when frames are throttled — a
-  // backgrounded tab, low power mode, a busy renderer — the flag latched true
-  // and every later scroll was dropped, so the chips could stay stowed while
-  // scrolling up. Measured at 1-2 frames per second in testing. The work here
-  // is two classList calls, so running it per scroll event is cheaper than the
-  // bookkeeping was.
+  // cleared it inside requestAnimationFrame; when frames are throttled the flag
+  // latches true and every later scroll is dropped, so the chips could stay
+  // stowed while scrolling up. The handler is two classList calls.
   addEventListener('scroll', () => {
     const y = Math.max(0, window.scrollY);
-    const delta = y - last;
+    const d = y - last;
     last = y;
+    if (!d) return;
 
-    // Never stow near the top: there is nothing to reclaim and it just flickers.
-    if (y <= 120) { chips.classList.remove('is-stowed'); return; }
+    // Never stow near the top: nothing to reclaim, and it only flickers.
+    if (y <= 120) { chips.classList.remove('is-stowed'); travel = 0; return; }
     // The wide layout does not pin its header, so there is nothing to gain.
     if (matchMedia('(min-width: 1024px)').matches) return;
-    if (Math.abs(delta) <= 6) return;                 // ignore jitter
 
-    chips.classList.toggle('is-stowed', delta > 0);
+    // Hysteresis. A single 6px threshold flipped the chips back and forth
+    // during momentum scrolling, which reverses direction in small increments
+    // and made them visibly flicker. Require sustained travel one way instead:
+    // the counter resets whenever the direction changes, so a wobble cannot
+    // accumulate into a toggle.
+    if ((d > 0) !== (travel > 0)) travel = 0;
+    travel += d;
+
+    if (travel > 48)       { chips.classList.add('is-stowed');    travel = 0; }
+    else if (travel < -48) { chips.classList.remove('is-stowed'); travel = 0; }
   }, { passive: true });
 
   // A resize can change which layout is active; start from a known state.
-  addEventListener('resize', () => chips.classList.remove('is-stowed'));
+  addEventListener('resize', () => { chips.classList.remove('is-stowed'); travel = 0; });
 }
 
 /* ---- bottom tab bar ---- */

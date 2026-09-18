@@ -232,12 +232,12 @@ The artwork, metadata, thumbs and filter chips hold position while only the stat
 
 ### Responsive layout
 
-The mobile layout stacks everything and pins the top block. Given width, it becomes two columns:
-
 | Breakpoint | Layout |
 | :-- | :-- |
-| < 768px | Single column. Artwork, metadata, thumbs and chips sticky at the top; rows scroll under them. |
-| ≥ 768px | Two columns, max 1180px centred. Now-playing panel and filters sticky in a 340px left column; guide fills the rest. Chips wrap instead of scrolling. |
-| ≥ 1100px | Left column 360px, max 1400px, and the guide splits into two columns of rows. |
+| < 1024px | Phone layout. Compact now-playing block stacked over the list; artwork, metadata, thumbs and chips sticky, rows scrolling under them. |
+| ≥ 1024px | The now-playing block becomes a hero: copy set large on the left, 360px artwork on the right. Adds a live badge, time remaining in the show, dial position, genre and the station description, none of which fit on a phone. The station list below is unchanged. |
+| ≥ 1280px | The list splits into two columns of rows. |
 
-The tab bar stays the mobile app shell at every width, with the tabs held to a readable width rather than stretched across a desktop window. Whether a desktop build should keep a bottom tab bar at all is a separate question; iHeart web uses a left nav.
+Time remaining is computed from the real schedule and handles a block that runs past midnight. At the pinned 9:20am with Elvis Duran on 6-10, it reads "40m left".
+
+The tab bar stays the mobile app shell at every width. Whether a desktop build should have a bottom tab bar at all is a separate question; iHeart web uses a left nav.

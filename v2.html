@@ -72,6 +72,7 @@
     content:"";position:absolute;top:0;bottom:0;right:0;width:60px;pointer-events:none;
     background:linear-gradient(to right,rgba(246,248,249,0) 45%,var(--surface-app) 95%);
   }
+  .live-badge,.hero-meta,.hero-desc{display:none}
   .thumbs{display:flex;align-items:center;justify-content:flex-end;flex-shrink:0}
   .thumbs button{padding:4px;border-radius:var(--radius-circular)}
   .thumbs button:hover{background:rgba(0,0,0,.05)}
@@ -158,44 +159,53 @@
   }
 
 
-  /* ---------- wide screens: tablet and desktop ----------
-     The mobile layout stacks everything and pins the top block. Given room, the
-     now-playing panel and the filters move into a fixed left column and the
-     station guide takes the rest, which is the usual shape for a live guide:
-     one thing playing, a long list to scan beside it. */
-  @media (min-width: 768px){
-    .page{
-      display:grid;
-      grid-template-columns:340px minmax(0,1fr);
-      gap:32px;
-      max-width:1180px;
-      margin:0 auto;
-      padding:24px 24px 96px;
-      align-items:start;
+
+  /* ---------- wide screens: the now-playing hero ----------
+     On a phone the now-playing block is compact: art, one line of copy, thumbs.
+     Given width it becomes a hero, with the copy set large on the left and the
+     artwork on the right, and room for things the phone has no space for: a
+     live badge, how long is left in the show, and the station's description.
+     The station list below is unchanged. */
+  @media (min-width: 1024px){
+    .page{max-width:1240px;margin:0 auto;padding:32px 24px 96px}
+    .top-sticky{position:static;padding:0;gap:24px}
+
+    .now{flex-direction:row;align-items:center;gap:40px}
+    .now .art{order:2;width:360px;height:360px;flex-shrink:0}
+    .meta-row{order:1;flex:1;min-width:0;flex-direction:column;align-items:flex-start;gap:20px}
+    .copy{width:100%;display:flex;flex-direction:column;align-items:flex-start;gap:0}
+    /* The phone clips this to one line with a fade; here it can breathe. */
+    .copy::after{display:none}
+    .copy .title{font-size:44px;line-height:50px;font-weight:700;white-space:normal;overflow:visible}
+    .copy .subtitle{font-size:16px;line-height:22px;margin-top:8px;white-space:normal;overflow:visible}
+
+    .live-badge{
+      display:inline-block;margin-bottom:12px;padding:4px 10px;border-radius:4px;
+      background:var(--brand-red);color:#fff;
+      font-size:12px;line-height:16px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
     }
-    /* Left column. Sticky rather than fixed so it scrolls away gracefully if the
-       viewport is too short to hold it. */
-    .top-sticky{top:24px;padding:0;gap:20px}
-    .art{width:100%;height:auto;aspect-ratio:1/1;max-width:340px}
-    /* Room to wrap, so the filters stop being a horizontal scroller in a
-       narrow column. */
-    .chips{flex-wrap:wrap;margin:0;padding:0;overflow:visible}
+    .hero-meta{
+      display:flex;align-items:center;gap:8px;margin-top:12px;
+      font-size:14px;line-height:20px;color:var(--on-surface-secondary);
+    }
+    .hero-meta .sep{width:3px;height:3px;border-radius:50%;background:currentColor;opacity:.6}
+    .hero-meta .pill{
+      border:1px solid var(--on-surface-secondary);border-radius:3px;
+      padding:0 6px;font-size:12px;line-height:18px;font-weight:600;
+    }
+    .hero-desc{
+      display:block;margin-top:16px;max-width:60ch;
+      font-size:15px;line-height:22px;color:var(--on-surface-secondary);
+    }
+    .thumbs{align-self:flex-start}
+    .chips{margin:0;padding:0;flex-wrap:wrap}
     .guide{gap:8px}
   }
 
-  /* Past a point a single column of 48px rows leaves a lot of empty line
-     length, so the guide splits in two. */
-  @media (min-width: 1100px){
-    .page{grid-template-columns:360px minmax(0,1fr);max-width:1400px}
+  /* Two columns of rows once there is room, so a wide window does not leave a
+     single column of 48px rows stranded in the middle. */
+  @media (min-width: 1280px){
     .guide{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 16px}
-    .art{max-width:360px}
-  }
-
-  /* The tab bar is the mobile app shell. Keep the tabs at a readable width
-     rather than stretching them across a desktop window. */
-  @media (min-width: 768px){
-    .tabbar{justify-content:center}
-    .tabbar button{flex:0 0 120px}
   }
 
   .error{
@@ -275,8 +285,11 @@
     <div class="art"><img id="npArt" src="" alt=""></div>
     <div class="meta-row">
       <div class="copy">
+        <span class="live-badge" id="npBadge">Live</span>
         <div class="title" id="npTitle"></div>
         <div class="subtitle" id="npSubtitle"></div>
+        <div class="hero-meta" id="npMeta"></div>
+        <p class="hero-desc" id="npDesc"></p>
       </div>
       <div class="thumbs">
         <button id="btnDislike" aria-label="Dislike" aria-pressed="false">
@@ -703,16 +716,42 @@ function toggleFavorite(id) {
 function renderNowPlaying() {
   const st = state.stations.find((s) => s.id === state.currentId);
   if (!st) return;
-  const show = showAt(st, now().getHours());
+  const h = nowHours();
+  const show = showAt(st, h);
+
   $('npArt').src = st.logo;
   $('npArt').alt = st.name;
-  // The Figma shows track-level metadata (song title, then artists). The dataset
-  // is schedule-level, so this maps to show title then host and station. Wiring
-  // a real now-playing track feed would fill the same two lines.
   $('npTitle').textContent = show ? show.title : st.name;
   $('npSubtitle').textContent = show ? st.name : (st.description || st.genre);
+
+  // Wide-screen only: how much of the show is left, the dial position and the
+  // genre, then the station's description underneath.
+  const bits = [];
+  const left = show ? remainingIn(show, h) : null;
+  if (left) bits.push(`<span>${left} left</span>`);
+  if (st.dial)  bits.push('<span class="sep"></span>', `<span>${st.dial}</span>`);
+  if (st.genre) bits.push('<span class="sep"></span>', `<span class="pill">${st.genre}</span>`);
+  $('npMeta').innerHTML = bits.join('');
+  $('npDesc').textContent = show ? (st.description || '') : '';
+
   $('btnLike').setAttribute('aria-pressed', String(state.liked));
   $('btnDislike').setAttribute('aria-pressed', String(state.disliked));
+}
+
+// Decimal hour of the (pinned) clock.
+function nowHours() {
+  const d = now();
+  return d.getHours() + d.getMinutes() / 60;
+}
+
+// "1h 40m", "40m". Handles a block that runs past midnight.
+function remainingIn(show, h) {
+  let end = show.end;
+  if (end <= show.start && h >= show.start) end += 24;   // wraps past midnight
+  const mins = Math.round((end - h) * 60);
+  if (mins <= 0 || mins > 24 * 60) return null;
+  const hrs = Math.floor(mins / 60), rem = mins % 60;
+  return hrs ? (rem ? `${hrs}h ${rem}m` : `${hrs}h`) : `${rem}m`;
 }
 
 

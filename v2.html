@@ -141,16 +141,54 @@
   }
   /* Connecting to a live stream is not instant, so the artwork shows a spinner
      from the moment you tap until audio actually starts. */
-  .station .logo .glyph.spin{width:30px;height:30px;display:none;animation:lrd-spin .9s linear infinite}
-  .station.is-buffering .logo .glyph.stop{display:none}
-  .station.is-buffering .logo .glyph.spin{display:block}
-  .station.is-buffering .logo .logo-overlay{opacity:1}
+  .station .logo .glyph.spin{width:30px;height:30px;animation:lrd-spin .9s linear infinite}
   @keyframes lrd-spin{to{transform:rotate(360deg)}}
   @media (prefers-reduced-motion: reduce){ .station .logo .glyph.spin{animation-duration:2.4s} }
-  /* Shown while this station is the one playing. */
-  .station.is-live .logo .logo-overlay{opacity:1}
-  /* And on hover, so the control is discoverable with a pointer. */
+  /* The overlay is up whenever there is something to say: this station is
+     playing, it is connecting, or a pointer is over it. */
+  .station.is-live .logo .logo-overlay,
+  .station.is-buffering .logo .logo-overlay{opacity:1}
   @media (hover:hover){ .station .logo:hover .logo-overlay{opacity:1} }
+
+  /* Idle station: hovering offers play. Playing station: a moving waveform
+     holds the state on its own, and hovering swaps it for stop so it is clear
+     the control does something. Connecting outranks both. */
+  .station .logo .glyph,
+  .station .logo .wave{display:none}
+  .station .logo .glyph.play{display:block}
+  .station.is-live .logo .glyph.play{display:none}
+  .station.is-live .logo .wave{display:flex}
+  @media (hover:hover){
+    .station.is-live .logo:hover .wave{display:none}
+    .station.is-live .logo:hover .glyph.stop{display:block}
+  }
+  .station.is-buffering .logo .glyph.play,
+  .station.is-buffering .logo .glyph.stop,
+  .station.is-buffering .logo .wave{display:none}
+  .station.is-buffering .logo .glyph.spin{display:block}
+
+  /* Waveform. Four bars on staggered delays, scaled rather than resized so the
+     animation stays off the layout path. */
+  .station .logo .wave{
+    position:absolute;align-items:flex-end;gap:3px;height:22px;
+    filter:drop-shadow(0 1px 2px rgba(0,0,0,.45));
+  }
+  .station .logo .wave i{
+    width:3px;height:100%;border-radius:2px;background:#fff;
+    transform-origin:bottom;transform:scaleY(.28);
+    animation:lrd-wave .95s ease-in-out infinite;
+  }
+  .station .logo .wave i:nth-child(2){animation-delay:.18s}
+  .station .logo .wave i:nth-child(3){animation-delay:.36s}
+  .station .logo .wave i:nth-child(4){animation-delay:.54s}
+  @keyframes lrd-wave{0%,100%{transform:scaleY(.28)}50%{transform:scaleY(1)}}
+  @media (prefers-reduced-motion: reduce){
+    /* Still reads as levels, just not moving. */
+    .station .logo .wave i{animation:none;transform:scaleY(.45)}
+    .station .logo .wave i:nth-child(2){transform:scaleY(1)}
+    .station .logo .wave i:nth-child(3){transform:scaleY(.65)}
+    .station .logo .wave i:nth-child(4){transform:scaleY(.85)}
+  }
   @media (prefers-reduced-motion: reduce){ .station .logo .logo-overlay{transition:none} }
   .station .row{
     flex:1;min-width:0;height:56px;min-height:44px;display:flex;align-items:center;gap:8px;
@@ -887,8 +925,10 @@ function renderGuide() {
       <button class="logo" aria-label="Play ${st.name}">
         <img src="${st.logo}" alt="${st.name}">
         <span class="logo-overlay">
+          <img class="glyph play" src="assets/v2/play-fill.svg" alt="">
           <img class="glyph stop" src="assets/v2/stop-fill.svg" alt="">
           <img class="glyph spin" src="assets/v2/loading.svg" alt="">
+          <span class="wave" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
         </span>
       </button>
       <button class="row">

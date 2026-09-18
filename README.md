@@ -283,9 +283,21 @@ A gradient above the tab bar is present the whole way down the list and goes onl
 
 ### Artwork as the play control
 
-Tapping a station's artwork in the list starts it, and tapping it again stops it. While a station is playing, its artwork carries a filled stop control: a brand-red disc with a white square, the same pairing v2's transport button used, derived from the geometry of the iOS `playback_stop` asset. That is also what tells you at a glance which row is live. With a pointer it appears on hover so the control is discoverable; on touch it shows only for the playing station.
+Tapping a station's artwork in the list starts it, and tapping it again stops it. What the artwork shows depends on state:
 
-A bare white stop glyph was tried first and read as too subtle against busy album art. The filled disc carries itself, so the scrim behind it dropped from 55% to 34% black: it now only has to keep the control legible over pale artwork rather than signal "playing" on its own.
+| State | Artwork shows |
+| :-- | :-- |
+| Idle | nothing |
+| Idle, hovered | filled play disc |
+| Playing | animated waveform, four bars |
+| Playing, hovered | filled stop disc |
+| Connecting | spinner |
+
+The waveform holds the playing state on its own, so it reads at a glance without a pointer; hovering swaps it for stop so it is obvious the control does something. The discs are brand red with a white glyph, the pairing v2's transport button used, built from the geometry of the iOS `playback_play` and `playback_stop` assets.
+
+Bars are scaled rather than resized, keeping the animation off the layout path, and `prefers-reduced-motion` freezes them at staggered heights so they still read as levels rather than as a hang.
+
+The scrim behind all of this is 34% black. It only has to keep the control legible over pale artwork, not signal "playing" on its own, so most of the artwork stays visible.
 
 Stopping pauses and resets `currentTime`, so resuming rejoins the live stream rather than replaying buffered audio. Tapping the row body (rather than the artwork) still selects and plays, as before.
 

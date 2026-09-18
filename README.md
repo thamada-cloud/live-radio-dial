@@ -330,3 +330,21 @@ The tab bar navigates. Radio is the screen this prototype is about; the other fo
 Search walks the current market first when de-duplicating. National digital channels appear in many markets, and de-duplicating in plain market order attributed them to whichever came first alphabetically, so a jazz channel sitting in the New York lineup was labelled "Anchorage, AK".
 
 Station rows are built by one shared factory, so Radio and Search behave identically, same play control, same overflow sheet, same states. The bottom fade and the chip stow belong to Radio only and switch off elsewhere.
+
+### Design values taken from the iOS codebase
+
+The four shell screens are built on values extracted from the app rather than invented.
+
+| Token | Source | Value |
+| :-- | :-- | :-- |
+| Type scale | `Multiplatform/SharedUI/Fonts/IHRFonts.swift` | h1 32 (tracking -0.5), h2 24, h3 20, h4 18, subtitle1 16, subtitle2 14 (-0.5), body3 14, caption1 12, overline1 11 |
+| Corner radii | `Multiplatform/DesignTokens/CornerRadiusManager.swift` | flat 0, primary 6, secondary 2, tertiary 16, quaternary 24, circular 999 |
+| Colours | `Multiplatform/DesignTokens/ColorManager.swift` | light theme pairs, e.g. `container_primary_inverse` is trueWhite and `on_surface_emphasis` is red600 |
+| Carousel | `iHeart/SharedUI/ContentCards/Carousel.swift` | 16 horizontal padding, 12 item spacing, 48 card peek on compact |
+| Cards per row | same, `cardCount(for:)` | squareDefault 3 on a phone, squareLarge 2, squareSmall 4, row/link/tall/featured 1 |
+
+Card width is `(container − peek − padding − spacing × count) / count`, so a 375pt phone gives 91pt cards for the common three-up carousel. That is the number the shelves use, expressed in CSS as `calc((100vw - 48px - 16px - 36px) / 3)` so it tracks the viewport.
+
+Section order on Home comes from `iHeart/Home/HomeTabView.swift`, and the section names on Podcasts and Playlists from their content tab views.
+
+**Still unverified.** These are the right numbers, but they were read from source rather than compared against a running build, so per-component treatments (shadows, header chevrons, exact card content shapes) may still differ. Settling that needs either screenshots of the app or a local simulator build.

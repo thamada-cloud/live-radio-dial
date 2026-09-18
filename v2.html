@@ -22,7 +22,17 @@
     --tab-unselected:#3f4447;           /* grey500    */
     --hairline:#e6eaed;                 /* grey200    */
     --brand-red:#c6002b;
-    --radius-primary:6px;
+    --radius-primary:6px;      /* corner_radius_rounded_primary */
+    --radius-tertiary:16px;    /* corner_radius_rounded_tertiary */
+    /* Padding scale */
+    --pad-sm1:4px; --pad-md1:8px; --pad-md2:12px; --pad-lg:16px; --pad-xl1:24px;
+    /* Carousel geometry from Carousel.swift. Card width is
+       (container - peek - padding - spacing*count) / count, and squareDefault
+       shows 3 on a phone, so a 375pt screen gives 91pt cards, not the 112 I
+       had guessed. */
+    --peek:48px;
+    --card-3:calc((100vw - 48px - 16px - 36px) / 3);
+    --card-2:calc((100vw - 48px - 16px - 24px) / 2);
     --radius-circular:999px;
     --body:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
   }
@@ -323,37 +333,39 @@
   .view{display:none}
   .view.is-active{display:block}
   .screen-title{
-    font-size:28px;line-height:34px;font-weight:700;
+    /* h1 in the type scale, with its -0.5 tracking. */
+    font-size:32px;line-height:38px;font-weight:700;letter-spacing:-.5px;
     color:var(--on-surface-brand-monochrome);
     padding:calc(16px + env(safe-area-inset-top)) 0 16px;
   }
 
-  /* Horizontal shelves on Home. */
-  .shelf{margin-bottom:24px}
+  /* Horizontal carousels. Spacing and peek are Carousel.swift's values. */
+  .shelf{margin-bottom:var(--pad-xl1)}
   .shelf h2{
+    /* Section header is h4 in the type scale. */
     font-size:18px;line-height:24px;font-weight:600;color:var(--on-surface-primary);
-    margin-bottom:12px;
+    margin-bottom:var(--pad-md2);
   }
   .shelf .rail{
-    display:flex;gap:12px;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;
-    margin:0 -16px;padding:0 16px 4px;
+    display:flex;gap:var(--pad-md2);overflow-x:auto;overflow-y:hidden;scrollbar-width:none;
+    margin:0 calc(-1 * var(--pad-lg));padding:0 var(--pad-lg) var(--pad-sm1);
   }
   .shelf .rail::-webkit-scrollbar{display:none}
-  .tile{width:112px;flex-shrink:0;text-align:left;background:none;border:none;padding:0;display:block}
+  .tile{width:var(--card-3);flex-shrink:0;text-align:left;background:none;border:none;padding:0;display:block}
   .tile .art-box{
-    /* A span defaults to inline, which ignored the height and let tall logos
-       stretch the tile instead of being cropped to a square. */
-    display:block;
-    position:relative;width:112px;height:112px;border-radius:var(--radius-primary);
+    display:block;position:relative;width:var(--card-3);height:var(--card-3);
+    border-radius:var(--radius-primary);
     overflow:hidden;background:#fff;box-shadow:0 1px 3px 0 var(--surface-shadow);
   }
   .tile .art-box img{width:100%;height:100%;object-fit:cover;display:block}
   .tile .name{
-    margin-top:8px;font-size:13px;line-height:17px;font-weight:600;
-    color:var(--on-surface-primary);
+    /* subtitle2 */
+    margin-top:var(--pad-md1);font-size:14px;line-height:18px;font-weight:600;
+    letter-spacing:-.5px;color:var(--on-surface-primary);
     display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
   }
   .tile .sub{
+    /* caption1 */
     font-size:12px;line-height:16px;color:var(--on-surface-secondary);
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
   }
@@ -373,7 +385,7 @@
   }
 
   /* Section header, the app's pattern of a title with a chevron affordance. */
-  .sec-title{font-size:18px;line-height:24px;font-weight:600;color:var(--on-surface-primary);margin:0 0 12px}
+  .sec-title{font-size:18px;line-height:24px;font-weight:600;color:var(--on-surface-primary);margin:0 0 var(--pad-md2)}
   .shelf h2{display:flex;align-items:center;gap:6px}
   .shelf h2 .chev{width:16px;height:16px;opacity:.5;transform:rotate(-90deg)}
 
@@ -383,7 +395,8 @@
   .lib-card{
     flex-shrink:0;display:flex;align-items:center;gap:8px;padding:12px 16px;
     background:var(--container-quaternary);border-radius:10px;border:none;
-    font-size:14px;font-weight:600;color:var(--on-surface-primary);white-space:nowrap;
+    font-size:14px;line-height:18px;font-weight:600;letter-spacing:-.5px;
+    color:var(--on-surface-primary);white-space:nowrap;
   }
   .lib-card svg{width:20px;height:20px;fill:currentColor}
 
@@ -391,7 +404,8 @@
   .genre-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
   .genre-card{
     height:72px;display:flex;align-items:flex-end;padding:10px 12px;border:none;
-    border-radius:10px;color:#fff;font-size:15px;font-weight:700;text-align:left;
+    border-radius:var(--radius-primary);color:#fff;font-size:14px;line-height:18px;
+    font-weight:700;letter-spacing:-.5px;text-align:left;
     background:var(--on-surface-primary);
   }
   .search-clear{padding:2px;border-radius:999px;flex-shrink:0}
@@ -405,7 +419,8 @@
   }
   .sec-list{list-style:none;display:flex;flex-direction:column;gap:2px}
   .sec-list li{
-    padding:16px 4px;font-size:17px;font-weight:600;color:var(--on-surface-primary);
+    padding:var(--pad-lg) var(--pad-sm1);font-size:18px;line-height:24px;
+    font-weight:600;color:var(--on-surface-primary);
     border-bottom:1px solid var(--hairline);
   }
 

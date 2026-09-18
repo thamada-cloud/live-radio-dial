@@ -229,3 +229,15 @@ The artwork, metadata, thumbs and filter chips hold position while only the stat
 ### Where the design and the data do not line up
 
 **The now-playing block is track-level in Figma** (a song title, then a list of artists) but the dataset is schedule-level. Those two lines currently show the show title, then host and station. A real now-playing feed would fill the same two lines with no layout change. Marked in the source.
+
+### Responsive layout
+
+The mobile layout stacks everything and pins the top block. Given width, it becomes two columns:
+
+| Breakpoint | Layout |
+| :-- | :-- |
+| < 768px | Single column. Artwork, metadata, thumbs and chips sticky at the top; rows scroll under them. |
+| ≥ 768px | Two columns, max 1180px centred. Now-playing panel and filters sticky in a 340px left column; guide fills the rest. Chips wrap instead of scrolling. |
+| ≥ 1100px | Left column 360px, max 1400px, and the guide splits into two columns of rows. |
+
+The tab bar stays the mobile app shell at every width, with the tabs held to a readable width rather than stretched across a desktop window. Whether a desktop build should keep a bottom tab bar at all is a separate question; iHeart web uses a left nav.

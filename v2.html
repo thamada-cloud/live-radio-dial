@@ -157,6 +157,47 @@
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;
   }
 
+
+  /* ---------- wide screens: tablet and desktop ----------
+     The mobile layout stacks everything and pins the top block. Given room, the
+     now-playing panel and the filters move into a fixed left column and the
+     station guide takes the rest, which is the usual shape for a live guide:
+     one thing playing, a long list to scan beside it. */
+  @media (min-width: 768px){
+    .page{
+      display:grid;
+      grid-template-columns:340px minmax(0,1fr);
+      gap:32px;
+      max-width:1180px;
+      margin:0 auto;
+      padding:24px 24px 96px;
+      align-items:start;
+    }
+    /* Left column. Sticky rather than fixed so it scrolls away gracefully if the
+       viewport is too short to hold it. */
+    .top-sticky{top:24px;padding:0;gap:20px}
+    .art{width:100%;height:auto;aspect-ratio:1/1;max-width:340px}
+    /* Room to wrap, so the filters stop being a horizontal scroller in a
+       narrow column. */
+    .chips{flex-wrap:wrap;margin:0;padding:0;overflow:visible}
+    .guide{gap:8px}
+  }
+
+  /* Past a point a single column of 48px rows leaves a lot of empty line
+     length, so the guide splits in two. */
+  @media (min-width: 1100px){
+    .page{grid-template-columns:360px minmax(0,1fr);max-width:1400px}
+    .guide{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 16px}
+    .art{max-width:360px}
+  }
+
+  /* The tab bar is the mobile app shell. Keep the tabs at a readable width
+     rather than stretching them across a desktop window. */
+  @media (min-width: 768px){
+    .tabbar{justify-content:center}
+    .tabbar button{flex:0 0 120px}
+  }
+
   .error{
     position:fixed;top:96px;left:50%;transform:translateX(-50%);z-index:60;
     background:var(--brand-red);color:#fff;padding:12px 16px;border-radius:8px;

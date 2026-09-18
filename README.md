@@ -270,3 +270,9 @@ Presets writes through to the same favourites the Presets chip filters on, so sa
 **Go to Station is not an iOS menu option.** The app has no `goToStation` case (a UI test comment states this outright), but it is in v1's media sheet and was asked for here, so it uses the dial button icon. That icon carries its own brand red rather than being monochrome like the other three, which is the same call made in v1.
 
 Share uses the Web Share sheet where the browser has one and falls back to copying the link. A dismissed share sheet is treated as a cancel, not an error.
+
+### Chips stow on scroll
+
+The filter chips collapse out of the way when you scroll down the list and come back as soon as you scroll up. Only below 1024px, since the wide layout does not pin its header and there is nothing to reclaim. They never stow within 120px of the top, and `prefers-reduced-motion` drops the transition.
+
+Implemented as a plain scroll listener with no `requestAnimationFrame` throttle. An earlier version set a `ticking` flag and cleared it inside rAF; when frames are throttled (backgrounded tab, low power mode, busy renderer) that flag latches true and every later scroll is dropped, leaving the chips stowed while scrolling up. Frames were measured at 1-2 per second during testing. The handler does two `classList` calls, so running it per event costs less than the bookkeeping did.

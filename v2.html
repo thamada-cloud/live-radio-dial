@@ -81,9 +81,15 @@
 
   /* ---------- filter chips ---------- */
   .chips{
-    display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;
+    display:flex;gap:8px;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;
     margin:8px -16px 0;padding:0 16px;
+    /* Collapses out of the way on scroll down. max-height rather than transform
+       so the space is actually reclaimed for rows, not just vacated. */
+    max-height:56px;
+    transition:max-height .25s ease,opacity .2s ease,margin-top .25s ease;
   }
+  .chips.is-stowed{max-height:0;opacity:0;margin-top:0;pointer-events:none}
+  @media (prefers-reduced-motion: reduce){ .chips{transition:none} }
   .chips::-webkit-scrollbar{display:none}
   .chip{
     display:flex;align-items:center;justify-content:center;gap:4px;flex-shrink:0;
@@ -892,6 +898,41 @@ function remainingIn(show, h) {
 }
 
 
+
+/* ---- stow the filter chips while scrolling down ----
+ * The sticky block is tall on a phone, so the chips get out of the way as you
+ * head down the list and come back the moment you scroll up. Only below 1024px:
+ * the wide layout does not pin its header, so there is nothing to reclaim.
+ */
+function watchScroll() {
+  const chips = $('chips');
+  let last = window.scrollY;
+
+  // Deliberately not rAF-throttled. An earlier version set a `ticking` flag and
+  // cleared it inside requestAnimationFrame; when frames are throttled — a
+  // backgrounded tab, low power mode, a busy renderer — the flag latched true
+  // and every later scroll was dropped, so the chips could stay stowed while
+  // scrolling up. Measured at 1-2 frames per second in testing. The work here
+  // is two classList calls, so running it per scroll event is cheaper than the
+  // bookkeeping was.
+  addEventListener('scroll', () => {
+    const y = Math.max(0, window.scrollY);
+    const delta = y - last;
+    last = y;
+
+    // Never stow near the top: there is nothing to reclaim and it just flickers.
+    if (y <= 120) { chips.classList.remove('is-stowed'); return; }
+    // The wide layout does not pin its header, so there is nothing to gain.
+    if (matchMedia('(min-width: 1024px)').matches) return;
+    if (Math.abs(delta) <= 6) return;                 // ignore jitter
+
+    chips.classList.toggle('is-stowed', delta > 0);
+  }, { passive: true });
+
+  // A resize can change which layout is active; start from a known state.
+  addEventListener('resize', () => chips.classList.remove('is-stowed'));
+}
+
 /* ---- bottom tab bar ---- */
 // Order and titles from iHeart/AppNavigation/TabBarConfigFiveTabs.json.
 // Radio is the active tab: this screen is the Live Radio Dial.
@@ -977,6 +1018,7 @@ function render() {
 
   renderTabBar();
   watchTrack();
+  watchScroll();
   render();
 })();
 </script>

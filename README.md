@@ -276,3 +276,9 @@ Share uses the Web Share sheet where the browser has one and falls back to copyi
 The filter chips collapse out of the way when you scroll down the list and come back as soon as you scroll up. Only below 1024px, since the wide layout does not pin its header and there is nothing to reclaim. They never stow within 120px of the top, and `prefers-reduced-motion` drops the transition.
 
 Implemented as a plain scroll listener with no `requestAnimationFrame` throttle. An earlier version set a `ticking` flag and cleared it inside rAF; when frames are throttled (backgrounded tab, low power mode, busy renderer) that flag latches true and every later scroll is dropped, leaving the chips stowed while scrolling up. Frames were measured at 1-2 per second during testing. The handler does two `classList` calls, so running it per event costs less than the bookkeeping did.
+
+### Bottom-of-list fade
+
+A gradient above the tab bar tells you the list continues, but only when that is genuinely unclear. If a decent slice of the next row is already peeking above the tab bar, the peek says "more below" perfectly well and the fade would just be haze over content, so it stays off. It appears when a row boundary happens to land near the fold, which is the case that makes a list with 50 more stations look finished.
+
+The threshold is 18px of visible partial row. Measured walking down the list: peeks of 53, 33, 24 and 39px leave it off, a 3px peek turns it on, and it goes off again at the true bottom.

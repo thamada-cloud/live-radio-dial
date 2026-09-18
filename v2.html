@@ -237,6 +237,19 @@
     .guide{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 16px}
   }
 
+  /* ---------- "there is more below" fade ----------
+     Only shown when the list bottom is genuinely ambiguous. If a decent slice
+     of the next row is already peeking above the tab bar, that says "more"
+     perfectly well on its own and the fade is just haze over content. */
+  .list-fade{
+    position:fixed;left:0;right:0;z-index:40;height:64px;pointer-events:none;
+    bottom:calc(49px + env(safe-area-inset-bottom));
+    background:linear-gradient(to top,var(--surface-app),transparent);
+    opacity:0;transition:opacity .2s ease-out;
+  }
+  .list-fade.is-on{opacity:1}
+  @media (prefers-reduced-motion: reduce){ .list-fade{transition:none} }
+
   .error{
     position:fixed;top:96px;left:50%;transform:translateX(-50%);z-index:60;
     background:var(--brand-red);color:#fff;padding:12px 16px;border-radius:8px;
@@ -359,6 +372,8 @@
   <p class="note" id="sheetNote" hidden></p>
   <footer id="sheetFooter"><button id="sheetApply">Apply</button></footer>
 </section>
+
+<div class="list-fade" id="listFade" aria-hidden="true"></div>
 
 <nav class="tabbar" id="tabbar" aria-label="Main"></nav>
 
@@ -828,6 +843,7 @@ function onLocationMethod(method) {
 }
 
 function renderGuide() {
+  requestAnimationFrame(updateListFade);   // list length just changed
   const host = $('guide');
   const list = visibleStations();
   host.innerHTML = '';
@@ -919,6 +935,32 @@ function remainingIn(show, h) {
 
 
 
+
+/* ---- bottom-of-list affordance ----
+ * A fade only earns its place when the end of the list is ambiguous. With a
+ * partial row showing there is already a visible cue, so the fade stays off;
+ * it appears when a row boundary happens to land near the fold, which makes a
+ * list with 50 more stations look finished.
+ */
+const PEEK_ENOUGH = 18;      // px of a partial row that reads as "more below"
+
+function updateListFade() {
+  const fade = $('listFade');
+  const tabbar = $('tabbar');
+  const remaining = document.documentElement.scrollHeight - window.innerHeight - window.scrollY;
+
+  if (remaining <= 4) { fade.classList.remove('is-on'); return; }   // actually at the end
+
+  // Where the content is cut off: the top edge of the tab bar.
+  const cut = tabbar.getBoundingClientRect().top;
+  let peek = 0;
+  for (const row of document.querySelectorAll('.station')) {
+    const b = row.getBoundingClientRect();
+    if (b.top < cut && b.bottom > cut) { peek = cut - b.top; break; }
+  }
+  fade.classList.toggle('is-on', peek < PEEK_ENOUGH);
+}
+
 /* ---- stow the filter chips while scrolling down ----
  * The sticky block is tall on a phone, so the chips get out of the way as you
  * head down the list and come back the moment you scroll up. Only below 1024px:
@@ -937,6 +979,7 @@ function watchScroll() {
     const y = Math.max(0, window.scrollY);
     const d = y - last;
     last = y;
+    updateListFade();
     if (!d) return;
 
     // Never stow near the top: nothing to reclaim, and it only flickers.
@@ -957,7 +1000,8 @@ function watchScroll() {
   }, { passive: true });
 
   // A resize can change which layout is active; start from a known state.
-  addEventListener('resize', () => { chips.classList.remove('is-stowed'); travel = 0; });
+  addEventListener('resize', () => { chips.classList.remove('is-stowed'); travel = 0; updateListFade(); });
+  updateListFade();
 }
 
 /* ---- bottom tab bar ---- */

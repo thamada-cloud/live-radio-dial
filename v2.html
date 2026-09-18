@@ -278,6 +278,13 @@
     border:1px solid #d1d5db;border-radius:8px;background:#fff;color:var(--on-surface-primary);
   }
   .sheet .city-search:focus{outline:2px solid var(--brand-red);outline-offset:-1px}
+  .sheet .action-row{
+    width:100%;display:flex;align-items:center;gap:16px;
+    padding:14px 8px;border-radius:8px;background:transparent;text-align:left;
+  }
+  .sheet .action-row:hover{background:#f3f4f6}
+  .sheet .action-row .icon{width:24px;height:24px;flex-shrink:0;color:var(--on-surface-primary)}
+  .sheet .action-row .name{font-size:16px;line-height:22px;font-weight:500;color:var(--on-surface-primary)}
   .sheet .note{padding:0 24px 16px;font-size:13px;line-height:18px;color:#6b7280}
   [hidden]{display:none !important}
 </style>
@@ -324,7 +331,7 @@
   </header>
   <div class="options" id="sheetOptions"></div>
   <p class="note" id="sheetNote" hidden></p>
-  <footer><button id="sheetApply">Apply</button></footer>
+  <footer id="sheetFooter"><button id="sheetApply">Apply</button></footer>
 </section>
 
 <nav class="tabbar" id="tabbar" aria-label="Main"></nav>
@@ -366,6 +373,8 @@ const state = {
   liked: false,
   disliked: false,
   track: null,
+  library: new Set(),
+  rowStation: null,
   filter: { chip: null, genre: null, location: null },
   sheet: null,
   sheetPage: 'main',
@@ -586,6 +595,8 @@ function renderSheet() {
   const scrim = $('scrim'), sheet = $('sheet');
   if (!kind) { scrim.hidden = sheet.hidden = true; return; }
   scrim.hidden = sheet.hidden = false;
+  $('sheetFooter').hidden = (kind === 'row');
+  if (kind === 'row') return renderRowSheet();
   if (kind === 'location') return renderLocationSheet();
   return renderValueSheet(kind);
 }
@@ -620,6 +631,70 @@ function renderValueSheet(kind) {
       b.addEventListener('click', () => { cfg.set(opt.v); renderSheet(); render(); });
       host.appendChild(b);
     });
+}
+
+
+/* ---- row overflow sheet ----
+ * Options and their toggling behaviour follow the iOS app's radio overflow menu
+ * (iHeart/SharedUI/Menu/View/OverflowMenu+Radio.swift): Presets and Library
+ * each flip their label and icon depending on whether the station is already
+ * saved. Icons are the real BottomSheet.xcassets glyphs.
+ *
+ * "Go to Station" is not an iOS MenuOption — the app has no goToStation case —
+ * but it is in v1's media sheet and was asked for here, so it uses the dial
+ * button icon.
+ */
+function renderRowSheet() {
+  const st = state.stations.find((s) => s.id === state.rowStation);
+  if (!st) return closeSheet();
+
+  const inPresets = state.favorites.has(st.id);
+  const inLibrary = state.library.has(st.id);
+
+  const items = [
+    { icon: inPresets ? 'delete-dash-circle' : 'add-to-preset',
+      label: inPresets ? 'Remove from Presets' : 'Add to Preset',
+      run: () => { toggleFavorite(st.id); renderSheet(); } },
+    { icon: inLibrary ? 'remove-from' : 'add-to',
+      label: inLibrary ? 'Remove from Library' : 'Add to Library',
+      run: () => { toggleLibrary(st.id); renderSheet(); } },
+    { icon: 'go-to-station', label: 'Go to Station',
+      run: () => { closeSheet(); flashError(`${st.name} has no station page in this prototype`); } },
+    { icon: 'share', label: 'Share',
+      run: () => shareStation(st) },
+  ];
+
+  $('sheetTitle').textContent = st.name;
+  $('sheetBack').hidden = true;
+  $('sheetNote').hidden = true;
+
+  const host = $('sheetOptions');
+  host.innerHTML = '';
+  items.forEach((it) => {
+    const b = document.createElement('button');
+    b.className = 'action-row';
+    b.innerHTML = `<img class="icon" src="assets/sheet/${it.icon}.svg" alt="">` +
+                  `<span class="name">${it.label}</span>`;
+    b.addEventListener('click', it.run);
+    host.appendChild(b);
+  });
+}
+
+function toggleLibrary(id) {
+  state.library.has(id) ? state.library.delete(id) : state.library.add(id);
+  try { localStorage.setItem('lrdV2Library', JSON.stringify([...state.library])); } catch (e) {}
+}
+
+async function shareStation(st) {
+  const url = location.href;
+  const text = `${st.name} — ${st.description || st.genre}`;
+  try {
+    if (navigator.share) { await navigator.share({ title: st.name, text, url }); closeSheet(); return; }
+    await navigator.clipboard.writeText(`${text} ${url}`);
+    closeSheet(); flashError('Link copied');
+  } catch (e) {
+    closeSheet();   // the user dismissed the share sheet, which is not an error
+  }
 }
 
 function renderLocationSheet() {
@@ -751,7 +826,8 @@ function renderGuide() {
     el.querySelector('.row').addEventListener('click', (e) => {
       if (e.target.closest('.more')) {
         e.stopPropagation();
-        toggleFavorite(st.id);
+        state.rowStation = st.id;
+        openSheet('row');
         return;
       }
       setStation(st.id, true);
@@ -864,6 +940,8 @@ function render() {
   try {
     const saved = localStorage.getItem('lrdV2Favorites');
     if (saved) state.favorites = new Set(JSON.parse(saved));
+    const lib = localStorage.getItem('lrdV2Library');
+    if (lib) state.library = new Set(JSON.parse(lib));
   } catch (e) {}
 
   // data/stations.js names the home station by its own id; resolve via apiId so

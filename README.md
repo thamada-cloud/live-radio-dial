@@ -253,3 +253,20 @@ Two details worth knowing. The API returns album art over `http`, which an `http
 Time remaining is computed from the real schedule and handles a block that runs past midnight. At the pinned 9:20am with Elvis Duran on 6-10, it reads "40m left".
 
 The tab bar stays the mobile app shell at every width. Whether a desktop build should have a bottom tab bar at all is a separate question; iHeart web uses a left nav.
+
+### Row overflow sheet
+
+The three dots on a row open a bottom sheet with four actions. Structure and toggling behaviour follow `iHeart/SharedUI/Menu/View/OverflowMenu+Radio.swift`: Presets and Library each flip their label *and* icon depending on whether the station is already saved, exactly as the iOS menu does.
+
+| Action | Icon (from `BottomSheet.xcassets`) |
+| :-- | :-- |
+| Add to Preset / Remove from Presets | `add_to_preset` / `delete_dash_circle` |
+| Add to Library / Remove from Library | `add_to` / `remove_from` |
+| Go to Station | `dial_button_icon` |
+| Share | `share` |
+
+Presets writes through to the same favourites the Presets chip filters on, so saving here changes what that chip shows. Library is its own set, persisted separately.
+
+**Go to Station is not an iOS menu option.** The app has no `goToStation` case (a UI test comment states this outright), but it is in v1's media sheet and was asked for here, so it uses the dial button icon. That icon carries its own brand red rather than being monochrome like the other three, which is the same call made in v1.
+
+Share uses the Web Share sheet where the browser has one and falls back to copying the link. A dismissed share sheet is treated as a cancel, not an error.

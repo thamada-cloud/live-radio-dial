@@ -17,6 +17,9 @@
     --on-surface-secondary:#3f4447;
     --on-surface-brand-monochrome:#000;
     --container-quaternary:#e6eaed;
+    --container-primary-inverse:#27292d;
+    --on-surface-emphasis-inverse:#fff;
+    --on-surface-secondary-inverse:rgba(255,255,255,.6);
     --brand-red:#c6002b;
     --radius-primary:6px;
     --radius-circular:999px;
@@ -33,27 +36,15 @@
   .icon{display:block;width:100%;height:100%}
   .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 
-  /* ---------- top header (status bar + nav), sticky ---------- */
-  .top-header{position:sticky;top:0;z-index:40;background:var(--surface-app)}
-  .status-bar{display:flex;height:44px;align-items:center;justify-content:space-between}
-  .status-bar .time{
-    width:134px;text-align:center;font-size:17px;line-height:22px;font-weight:600;
-    color:var(--on-surface-brand-monochrome);
-  }
-  .status-bar .levels{width:134px;display:flex;justify-content:center}
-  .status-bar .levels img{width:78px}
-  .nav{display:flex;height:44px;align-items:center;gap:4px;padding-right:16px}
-  .nav h1{
-    flex:1;min-width:0;font-size:20px;line-height:24px;font-weight:600;
-    color:var(--on-surface-brand-monochrome);
-    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-  }
-  .btn-icon{padding:4px;border-radius:var(--radius-circular)}
-  .btn-icon:hover{background:rgba(0,0,0,.05)}
-  .btn-icon .icon{width:24px;height:24px}
 
   /* ---------- now playing ---------- */
-  .page{padding:0 16px;display:flex;flex-direction:column;gap:16px;padding-bottom:140px}
+  /* The frame put 88px of header above the artwork. With the header gone the
+     art sat flush against the top edge, so keep a little room, plus the safe
+     area on a notched device. */
+  .page{
+    display:flex;flex-direction:column;gap:16px;
+    padding:calc(16px + env(safe-area-inset-top)) 16px 96px;
+  }
   .now{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px}
   .art{
     width:248px;height:248px;border-radius:var(--radius-primary);overflow:hidden;
@@ -124,30 +115,32 @@
   .station .row .more .icon{width:24px;height:24px}
   .empty{padding:32px 0;text-align:center;color:var(--on-surface-secondary);font-size:14px}
 
-  /* ---------- media controls ---------- */
-  .controls{position:fixed;left:0;right:0;bottom:24px;z-index:50;padding:0 16px;display:flex;justify-content:center}
-  /* Hugs its contents rather than spanning the frame's full 343px. That width
-     was sized for five controls; with three it left large empty margins. */
-  .pill{
-    width:auto;max-width:100%;height:52px;display:flex;align-items:center;justify-content:center;
-    gap:16px;padding:4px 8px;border-radius:var(--radius-circular);
-    background:var(--surface-app-overlay);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);
-  }
-  .pill button{padding:4px;border-radius:var(--radius-circular);flex-shrink:0}
-  .pill .icon{width:32px;height:32px}
-  /* 72px control inside a 52px pill, exactly as the design overflows it */
-  .pill .primary{
-    background:var(--brand-red);padding:4px;border-radius:var(--radius-circular);
-    filter:drop-shadow(0 1px 1.5px var(--surface-shadow));margin:-10px 0;
-  }
-  .pill .primary .icon{width:64px;height:64px}
-  .pill button:not(.primary):hover{background:rgba(255,255,255,.2)}
 
-  /* Subtle fade so the list dissolves under the control pill rather than being
-     cut off by it. Same treatment as v1. */
-  .bottom-fade{
-    position:fixed;left:0;right:0;bottom:0;height:128px;z-index:20;pointer-events:none;
-    background:linear-gradient(to top,var(--surface-app),transparent);
+  /* ---------- bottom tab bar ----------
+     Built from the iOS app rather than the Figma file, which has no tab bar.
+     iHeart/AppNavigation/TabBarConfigFiveTabs.json defines the five tabs and
+     their order; TabBarViewModel puts the bar at 49pt; IHRAppDelegate
+     configures UITabBarAppearance with an opaque containerPrimaryInverse
+     background, onSurfaceSecondary for unselected items and onSurfaceEmphasis
+     for the selected one. Those two semantic tokens resolve through Swift
+     rather than the colour catalogue, so the exact values here are a read of
+     "inverse of a light surface": a dark bar, white selected, muted unselected. */
+  .tabbar{
+    position:fixed;left:0;right:0;bottom:0;z-index:50;
+    display:flex;align-items:stretch;
+    height:calc(49px + env(safe-area-inset-bottom));
+    padding-bottom:env(safe-area-inset-bottom);
+    background:var(--container-primary-inverse);
+  }
+  .tabbar button{
+    flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:2px;padding:6px 2px 4px;color:var(--on-surface-secondary-inverse);
+  }
+  .tabbar button[aria-current="page"]{color:var(--on-surface-emphasis-inverse)}
+  .tabbar .icon{width:24px;height:24px}
+  .tabbar .label{
+    font-size:10px;line-height:12px;font-weight:500;letter-spacing:.1px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;
   }
 
   .error{
@@ -221,19 +214,6 @@
 </head>
 <body>
 
-<header class="top-header">
-  <div class="status-bar" id="statusBar">
-    <div class="time">9:41</div>
-    <div class="levels"><img class="icon" src="assets/v2/status-levels.svg" alt=""></div>
-  </div>
-  <div class="nav">
-    <button class="btn-icon" aria-label="Back"><img class="icon" src="assets/v2/back.svg" alt=""></button>
-    <h1>Live Radio Dial</h1>
-    <button class="btn-icon" aria-label="Search"><img class="icon" src="assets/v2/search.svg" alt=""></button>
-    <button class="btn-icon" aria-label="AirPlay"><img class="icon" src="assets/v2/airplay-header.svg" alt=""></button>
-  </div>
-</header>
-
 <main class="page">
   <section class="now">
     <div class="art"><img id="npArt" src="" alt=""></div>
@@ -258,18 +238,6 @@
   <section class="guide" id="guide"></section>
 </main>
 
-<div class="bottom-fade"></div>
-
-<div class="controls">
-  <div class="pill">
-    <!-- Figma node 314:13377 also has a cast button on the left and an overflow
-         button on the right. Both removed on request, leaving the three
-         transport controls. -->
-    <button id="btnPrev" aria-label="Previous station"><img class="icon" src="assets/v2/chevron-up.svg" alt=""></button>
-    <button class="primary" id="btnStop" aria-label="Play"><img class="icon" src="assets/v2/play.svg" alt=""></button>
-    <button id="btnNext" aria-label="Next station"><img class="icon" src="assets/v2/chevron-down.svg" alt=""></button>
-  </div>
-</div>
 
 <div class="scrim" id="scrim" hidden></div>
 <section class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle" hidden>
@@ -283,6 +251,8 @@
   <p class="note" id="sheetNote" hidden></p>
   <footer><button id="sheetApply">Apply</button></footer>
 </section>
+
+<nav class="tabbar" id="tabbar" aria-label="Main"></nav>
 
 <div class="error" id="error" hidden></div>
 
@@ -305,10 +275,6 @@ const RESEARCH = {
   // Matches v1 so the two versions are comparable in a study. See v1's
   // Component.RESEARCH for why the clock is pinned rather than live.
   pinnedNow: [9, 20],
-  // The Figma frame includes an iOS status bar. Faithful on desktop, but on a
-  // real phone it sits under the device's own status bar and reads as a bug.
-  // Turn this off before fielding on devices.
-  showStatusBar: true,
 };
 
 const state = {
@@ -417,13 +383,6 @@ function setStation(id, play) {
     if (play) { const p = audio.play(); if (p && p.catch) p.catch(() => {}); }
   }
   render();
-}
-function step(delta) {
-  const list = visibleStations();
-  if (!list.length) return;
-  const i = list.findIndex((s) => s.id === state.currentId);
-  const next = list[((i < 0 ? 0 : i) + delta + list.length) % list.length];
-  setStation(next.id, true);
 }
 function flashError(msg) {
   const el = $('error');
@@ -701,15 +660,36 @@ function renderNowPlaying() {
   $('btnDislike').setAttribute('aria-pressed', String(state.disliked));
 }
 
-function renderTransport() {
-  const btn = $('btnStop');
-  const playing = state.playing;
-  btn.querySelector('img').src = playing ? 'assets/v2/stop.svg' : 'assets/v2/play.svg';
-  btn.setAttribute('aria-label', playing ? 'Stop' : 'Play');
+
+/* ---- bottom tab bar ---- */
+// Order and titles from iHeart/AppNavigation/TabBarConfigFiveTabs.json.
+// Radio is the active tab: this screen is the Live Radio Dial.
+const TABS = [
+  { id: 'home',      label: 'Home' },
+  { id: 'search',    label: 'Search' },
+  { id: 'radio',     label: 'Radio' },
+  { id: 'podcasts',  label: 'Podcasts' },
+  { id: 'playlists', label: 'Playlists' },
+];
+const ACTIVE_TAB = 'radio';
+
+function renderTabBar() {
+  const host = $('tabbar');
+  host.innerHTML = '';
+  TABS.forEach((t) => {
+    const b = document.createElement('button');
+    const active = t.id === ACTIVE_TAB;
+    if (active) b.setAttribute('aria-current', 'page');
+    b.setAttribute('aria-label', t.label);
+    b.innerHTML = `<img class="icon" src="assets/tabs/${t.id}.svg" alt="">` +
+                  `<span class="label">${t.label}</span>`;
+    // Only Radio has a screen in this prototype.
+    if (!active) b.addEventListener('click', () => flashError(`${t.label} is not built in this prototype`));
+    host.appendChild(b);
+  });
 }
 
 function render() {
-  renderTransport();
   renderNowPlaying();
   renderChips();
   renderGuide();
@@ -717,7 +697,6 @@ function render() {
 
 /* ---- boot ---- */
 (function init() {
-  $('statusBar').hidden = !RESEARCH.showStatusBar;
   state.stations = buildStations();
   try {
     const saved = localStorage.getItem('lrdV2Favorites');
@@ -736,32 +715,17 @@ function render() {
 
   audio = new Audio();
   audio.preload = 'none';
-  // Both events must re-render: the button showed a stop glyph forever because
-  // nothing repainted it when playback actually stopped.
-  audio.addEventListener('playing', () => { state.playing = true;  renderTransport(); });
-  audio.addEventListener('pause',   () => { state.playing = false; renderTransport(); });
+  audio.addEventListener('playing', () => { state.playing = true; });
+  audio.addEventListener('pause',   () => { state.playing = false; });
   audio.addEventListener('error',   () => flashError('Unable to play this stream'));
   if (home && home.stream) audio.src = home.stream;
 
-  $('btnStop').addEventListener('click', () => {
-    if (state.playing) {
-      audio.pause();
-      // Live radio stops rather than pauses: drop the buffer so resuming
-      // rejoins the stream live instead of replaying stale audio.
-      audio.currentTime = 0;
-    } else {
-      const p = audio.play();
-      if (p && p.catch) p.catch(() => {});
-    }
-  });
   $('scrim').addEventListener('click', closeSheet);
   $('sheetClose').addEventListener('click', closeSheet);
   $('sheetBack').addEventListener('click', () => { state.sheetPage = 'main'; renderSheet(); });
   $('sheetApply').addEventListener('click', closeSheet);
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeSheet(); });
 
-  $('btnPrev').addEventListener('click', () => step(-1));
-  $('btnNext').addEventListener('click', () => step(1));
   $('btnLike').addEventListener('click', () => {
     state.liked = !state.liked; if (state.liked) state.disliked = false; render();
   });
@@ -769,6 +733,7 @@ function render() {
     state.disliked = !state.disliked; if (state.disliked) state.liked = false; render();
   });
 
+  renderTabBar();
   render();
 })();
 </script>

@@ -145,7 +145,7 @@ Built from Figma: [Live-Radio-Dial-v2, node 314:13377](https://www.figma.com/des
 | Time | 14 columns, ~11 screen-widths of horizontal scroll | A time range on each row, no horizontal scroll |
 | Filtering | Icon opening a bottom sheet | Scrolling chip row, always visible |
 | Now playing | 300x250 slot (ad-shaped) | 248x248 square |
-| Transport | Talkback, prev, play, next, more | prev, **play/stop**, next |
+| Transport | Talkback, prev, play, next, more | none: tap a row to play |
 | Thumbs | Playlist, like, dislike | Dislike, like (no playlist) |
 
 **The time axis is gone.** Each row shows the show that is on now plus its time range; there is no way to look at what is on later. Since the research plan's hypothesis is about a guide that shows what is coming up, and its time-axis task asks for a show ten hours out, v2 does not answer the same question v1 does. That is worth settling before either goes into a study.
@@ -212,7 +212,11 @@ The zip flow uses `prompt()`, which is the closest web equivalent to iOS's `IHRT
 
 **Transport arrows are swapped** relative to Figma node 314:13377, which puts the down chevron on the left and the up chevron on the right. The guide is a vertical list, so the left button (previous, moving up the list) points up and the right button (next, moving down) points down. Noted in the source so it does not get "fixed" back.
 
-**Cast and overflow removed** from the control pill, leaving the three transport controls. The pill now sizes to its contents (200px rather than the frame's 343px), since that width was drawn for five controls and left large empty margins with three.
+**The control pill, the bottom fade and the whole top header are removed**, and a bottom tab bar takes their place. Playback is now a row tap.
+
+**A bottom tab bar was added**, which the Figma file does not contain. It comes from the iOS app: `iHeart/AppNavigation/TabBarConfigFiveTabs.json` defines the five tabs and their order (Home, Search, Radio, Podcasts, Playlists), `TabBarViewModel` puts the bar at 49pt, and `IHRAppDelegate` configures `UITabBarAppearance` with an opaque `containerPrimaryInverse` background, `onSurfaceSecondary` for unselected items and `onSurfaceEmphasis` for the selected one. Icons are the real `TabBar.xcassets` SVGs. Radio is the active tab.
+
+Those two semantic colour tokens resolve through Swift rather than the colour catalogue, so the exact values are a read of "inverse of a light surface": dark bar, white selected, muted white unselected. Worth a check against the running app.
 
 ### Where the design and the data do not line up
 

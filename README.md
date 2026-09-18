@@ -216,7 +216,13 @@ The zip flow uses `prompt()`, which is the closest web equivalent to iOS's `IHRT
 
 **A bottom tab bar was added**, which the Figma file does not contain. It comes from the iOS app: `iHeart/AppNavigation/TabBarConfigFiveTabs.json` defines the five tabs and their order (Home, Search, Radio, Podcasts, Playlists), `TabBarViewModel` puts the bar at 49pt, and `IHRAppDelegate` configures `UITabBarAppearance` with an opaque `containerPrimaryInverse` background, `onSurfaceSecondary` for unselected items and `onSurfaceEmphasis` for the selected one. Icons are the real `TabBar.xcassets` SVGs. Radio is the active tab.
 
-Those two semantic colour tokens resolve through Swift rather than the colour catalogue, so the exact values are a read of "inverse of a light surface": dark bar, white selected, muted white unselected. Worth a check against the running app.
+Colours resolve in `Multiplatform/DesignTokens/ColorManager.swift`, which holds a light and a dark value per token. In **light** theme `container_primary_inverse` is `trueWhite` (#ffffff) and `on_surface_emphasis` is `red600` (#c6002b), so the bar is white with a red selected tab and `grey500` (#3f4447) unselected. Reading "inverse" as dark gives the dark-theme pairing, which is wrong for this screen.
+
+The tab glyphs are inlined rather than referenced as `<img>`. An SVG loaded through `<img>` cannot inherit the page's `color`, so `currentColor` resolved to black and the icons disappeared into the bar.
+
+### Sticky header
+
+The artwork, metadata, thumbs and filter chips hold position while only the station rows scroll under them.
 
 ### Where the design and the data do not line up
 

@@ -17,9 +17,10 @@
     --on-surface-secondary:#3f4447;
     --on-surface-brand-monochrome:#000;
     --container-quaternary:#e6eaed;
-    --container-primary-inverse:#27292d;
-    --on-surface-emphasis-inverse:#fff;
-    --on-surface-secondary-inverse:rgba(255,255,255,.6);
+    --container-primary-inverse:#fff;   /* trueWhite  */
+    --on-surface-emphasis:#c6002b;      /* red600     */
+    --tab-unselected:#3f4447;           /* grey500    */
+    --hairline:#e6eaed;                 /* grey200    */
     --brand-red:#c6002b;
     --radius-primary:6px;
     --radius-circular:999px;
@@ -41,9 +42,14 @@
   /* The frame put 88px of header above the artwork. With the header gone the
      art sat flush against the top edge, so keep a little room, plus the safe
      area on a notched device. */
-  .page{
+  .page{padding:0 16px 96px}
+  /* Artwork, metadata, thumbs and the filter chips hold position; only the
+     station rows scroll under them. */
+  .top-sticky{
+    position:sticky;top:0;z-index:30;
     display:flex;flex-direction:column;gap:16px;
-    padding:calc(16px + env(safe-area-inset-top)) 16px 96px;
+    background:var(--surface-app);
+    padding:calc(16px + env(safe-area-inset-top)) 0 16px;
   }
   .now{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px}
   .art{
@@ -117,27 +123,33 @@
 
 
   /* ---------- bottom tab bar ----------
-     Built from the iOS app rather than the Figma file, which has no tab bar.
-     iHeart/AppNavigation/TabBarConfigFiveTabs.json defines the five tabs and
-     their order; TabBarViewModel puts the bar at 49pt; IHRAppDelegate
-     configures UITabBarAppearance with an opaque containerPrimaryInverse
-     background, onSurfaceSecondary for unselected items and onSurfaceEmphasis
-     for the selected one. Those two semantic tokens resolve through Swift
-     rather than the colour catalogue, so the exact values here are a read of
-     "inverse of a light surface": a dark bar, white selected, muted unselected. */
+     Built from the iOS app; the Figma file has no tab bar.
+     Tabs and order:  iHeart/AppNavigation/TabBarConfigFiveTabs.json
+     49pt height:     TabBarViewModel
+     Appearance:      IHRAppDelegate configures UITabBarAppearance with
+                      container_primary_inverse background,
+                      on_surface_secondary unselected,
+                      on_surface_emphasis selected.
+     Those tokens resolve in Multiplatform/DesignTokens/ColorManager.swift. In
+     LIGHT theme container_primary_inverse is trueWhite and on_surface_emphasis
+     is red600, so the bar is white with a red selected tab. An earlier cut read
+     "inverse" as dark and built a black bar, which is the dark-theme pairing. */
   .tabbar{
     position:fixed;left:0;right:0;bottom:0;z-index:50;
     display:flex;align-items:stretch;
     height:calc(49px + env(safe-area-inset-bottom));
     padding-bottom:env(safe-area-inset-bottom);
     background:var(--container-primary-inverse);
+    border-top:1px solid var(--hairline);
   }
   .tabbar button{
     flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
-    gap:2px;padding:6px 2px 4px;color:var(--on-surface-secondary-inverse);
+    gap:2px;padding:6px 2px 4px;color:var(--tab-unselected);
   }
-  .tabbar button[aria-current="page"]{color:var(--on-surface-emphasis-inverse)}
-  .tabbar .icon{width:24px;height:24px}
+  .tabbar button[aria-current="page"]{color:var(--on-surface-emphasis)}
+  /* Inlined, not <img>: an SVG loaded through <img> cannot inherit the page's
+     color, so currentColor resolved to black and the icons vanished. */
+  .tabbar svg{width:24px;height:24px;display:block;fill:currentColor}
   .tabbar .label{
     font-size:10px;line-height:12px;font-weight:500;letter-spacing:.1px;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;
@@ -215,6 +227,7 @@
 <body>
 
 <main class="page">
+  <div class="top-sticky">
   <section class="now">
     <div class="art"><img id="npArt" src="" alt=""></div>
     <div class="meta-row">
@@ -234,6 +247,7 @@
   </section>
 
   <nav class="chips" id="chips" aria-label="Filters"></nav>
+  </div>
 
   <section class="guide" id="guide"></section>
 </main>
@@ -673,6 +687,15 @@ const TABS = [
 ];
 const ACTIVE_TAB = 'radio';
 
+// Inlined so the glyphs inherit the tab's colour (see the .tabbar svg rule).
+const TAB_ICONS = {
+  "home": "<svg viewBox=\"0 0 25 24\" aria-hidden=\"true\"><path d=\"M22.2297 10.0454L13.0405 2.17199C12.7702 1.94267 12.2297 1.94267 11.9594 2.17199L2.77027 10.0454C2.59009 10.1982 2.5 10.3511 2.5 10.504V21.3884C2.5 21.6942 2.86036 22 3.31081 22H9.07656H15.9234H21.6891C22.1396 22 22.5 21.6942 22.5 21.3884V10.504C22.5 10.3511 22.4099 10.1982 22.2297 10.0454Z\" fill=\"currentColor\"/></svg>",
+  "search": "<svg viewBox=\"0 0 25 24\" aria-hidden=\"true\"><path fill-rule=\"evenodd\" clip-rule=\"evenodd\" d=\"M14.7761 16.1655C13.6684 16.8176 12.3807 17.191 11.0067 17.191C6.86088 17.191 3.5 13.7904 3.5 9.59552C3.5 5.40063 6.86088 2 11.0067 2C15.1526 2 18.5135 5.40063 18.5135 9.59552C18.5135 11.5096 17.8137 13.2583 16.659 14.5941L21.2062 19.962C21.6448 20.4797 21.5855 21.259 21.0739 21.7028C20.5623 22.1465 19.792 22.0865 19.3534 21.5689L14.7761 16.1655ZM15.5852 9.59552C15.5852 12.154 13.5353 14.2281 11.0067 14.2281C8.47816 14.2281 6.42833 12.154 6.42833 9.59552C6.42833 7.03702 8.47816 4.96296 11.0067 4.96296C13.5353 4.96296 15.5852 7.03702 15.5852 9.59552Z\" fill=\"currentColor\"/></svg>",
+  "radio": "<svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M16.8632 16.9545C16.6724 17.0868 16.4077 17.0415 16.266 16.8616C16.1096 16.663 16.1643 16.3807 16.3739 16.2332C18.1489 14.9844 19.3 12.9774 19.3 10.7143C19.3 6.92719 16.0766 3.85714 12.1 3.85714C8.12339 3.85714 4.9 6.92719 4.9 10.7143C4.9 12.885 5.95901 14.8201 7.61188 16.0766C7.81875 16.2338 7.85976 16.5241 7.68834 16.7161C7.53815 16.8844 7.27698 16.9165 7.09475 16.78C5.21017 15.3675 4 13.1755 4 10.7143C4 6.4538 7.62637 3 12.1 3C16.5736 3 20.2 6.4538 20.2 10.7143C20.2 13.2793 18.8856 15.5519 16.8632 16.9545Z\" fill=\"currentColor\"/> <path d=\"M15.5392 14.6793C15.1917 14.953 14.6861 14.8554 14.4156 14.5119C14.0937 14.1031 14.239 13.519 14.6219 13.161C15.2873 12.5388 15.7 11.6725 15.7 10.7143C15.7 8.82074 14.0881 7.28571 12.1 7.28571C10.1119 7.28571 8.5 8.82074 8.5 10.7143C8.5 11.6448 8.88923 12.4887 9.52105 13.1064C9.90455 13.4814 10.0309 14.0914 9.67494 14.4903C9.39282 14.8064 8.90296 14.8799 8.57322 14.6088C7.42608 13.6658 6.7 12.2708 6.7 10.7143C6.7 7.87397 9.11787 5.57143 12.1 5.57143C15.0821 5.57143 17.5 7.87397 17.5 10.7143C17.5 12.31 16.7368 13.736 15.5392 14.6793Z\" fill=\"currentColor\"/> <path d=\"M13.9001 10.7143C13.9001 11.5131 13.3264 12.1843 12.5501 12.3746V15.8571H12.702C12.834 15.8571 12.9593 15.9124 13.0448 16.0082L16.8698 20.2939C17.1183 20.5722 16.9105 21 16.527 21H7.67316C7.28957 21 7.08186 20.5722 7.33028 20.2939L11.1553 16.0082C11.2408 15.9124 11.3661 15.8571 11.4982 15.8571H11.6501V12.3746C10.8737 12.1843 10.3001 11.5131 10.3001 10.7143C10.3001 9.76751 11.1059 9 12.1001 9C13.0942 9 13.9001 9.76751 13.9001 10.7143Z\" fill=\"currentColor\"/></svg>",
+  "podcasts": "<svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M9.63494 18.5368C9.63494 17.9927 10.0743 17.5515 10.6163 17.5515C11.1583 17.5515 11.5977 17.9927 11.5977 18.5368H13.5604C14.1024 18.5368 14.5417 18.9779 14.5417 19.5221V21H6.69087V19.5221C6.69087 18.9779 7.13024 18.5368 7.67223 18.5368H9.63494Z\" fill=\"currentColor\"/> <path d=\"M13.3715 3.18225C16.0305 3.89206 17.6564 6.46939 17.0026 8.9389L15.7568 13.6456C15.1032 16.1151 12.4174 17.5416 9.75845 16.8318C7.63762 16.2657 6.17418 14.5118 6 12.5721L8.69732 13.2948C9.14039 13.4135 9.59582 13.1506 9.71444 12.7075C9.83327 12.2644 9.57027 11.809 9.12721 11.6903L6.17378 10.8989L6.5988 9.29302L9.55729 10.0857C10.0004 10.2044 10.4558 9.94148 10.5744 9.4984C10.6932 9.05531 10.4302 8.59989 9.98718 8.48117L7.02402 7.68717L7.37299 6.36844C7.40017 6.26572 7.43099 6.1648 7.46505 6.06577L10.2786 6.81964C10.7216 6.93836 11.1771 6.67541 11.2957 6.23233C11.4145 5.78926 11.1515 5.33382 10.7085 5.2151L8.33942 4.58037C9.51167 3.27281 11.4486 2.66895 13.3715 3.18225Z\" fill=\"currentColor\"/></svg>",
+  "playlists": "<svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M16.3037 3H4.33037C3.5986 3 3 3.59506 3 4.32236C3 5.04966 3.5986 5.64472 4.33037 5.64472H16.3037C17.0354 5.64472 17.634 5.04966 17.634 4.32236C17.634 3.59506 17.0354 3 16.3037 3Z\" fill=\"currentColor\"/> <path d=\"M16.3037 8.28944H4.33037C3.5986 8.28944 3 8.8845 3 9.61179C3 10.3391 3.5986 10.9342 4.33037 10.9342H16.3037C17.0354 10.9342 17.634 10.3391 17.634 9.61179C17.634 8.8845 17.0354 8.28944 16.3037 8.28944Z\" fill=\"currentColor\"/> <path d=\"M4.33037 13.5789H10.9822C11.714 13.5789 12.3126 14.1739 12.3126 14.9012C12.3126 15.6285 11.714 16.2236 10.9822 16.2236H4.33037C3.5986 16.2236 3 15.6285 3 14.9012C3 14.1739 3.5986 13.5789 4.33037 13.5789Z\" fill=\"currentColor\"/> <path d=\"M14.9733 20.3361V14.7425C14.9733 14.2268 15.532 13.9095 15.9844 14.1607L20.6806 16.9641C21.1065 17.2286 21.1065 17.8501 20.6806 18.1013L15.9844 20.9047C15.532 21.1692 14.9733 20.8518 14.9733 20.3361Z\" fill=\"currentColor\"/></svg>"
+};
+
 function renderTabBar() {
   const host = $('tabbar');
   host.innerHTML = '';
@@ -681,8 +704,7 @@ function renderTabBar() {
     const active = t.id === ACTIVE_TAB;
     if (active) b.setAttribute('aria-current', 'page');
     b.setAttribute('aria-label', t.label);
-    b.innerHTML = `<img class="icon" src="assets/tabs/${t.id}.svg" alt="">` +
-                  `<span class="label">${t.label}</span>`;
+    b.innerHTML = TAB_ICONS[t.id] + `<span class="label">${t.label}</span>`;
     // Only Radio has a screen in this prototype.
     if (!active) b.addEventListener('click', () => flashError(`${t.label} is not built in this prototype`));
     host.appendChild(b);

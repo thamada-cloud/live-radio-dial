@@ -130,9 +130,15 @@
   .station .logo img{width:100%;height:100%;object-fit:cover;display:block}
   .station .logo .logo-overlay{
     position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
-    background:rgba(0,0,0,.55);opacity:0;transition:opacity .16s ease-out;
+    /* Lighter than it was: the stop control is now a filled disc that carries
+       itself, so the scrim only has to keep it legible over pale artwork
+       instead of doing the work of signalling "playing" on its own. */
+    background:rgba(0,0,0,.34);opacity:0;transition:opacity .16s ease-out;
   }
-  .station .logo .glyph{width:34px;height:34px;object-fit:contain;position:absolute}
+  .station .logo .glyph{
+    width:38px;height:38px;object-fit:contain;position:absolute;
+    filter:drop-shadow(0 1px 2px rgba(0,0,0,.35));
+  }
   /* Connecting to a live stream is not instant, so the artwork shows a spinner
      from the moment you tap until audio actually starts. */
   .station .logo .glyph.spin{width:30px;height:30px;display:none;animation:lrd-spin .9s linear infinite}
@@ -881,7 +887,7 @@ function renderGuide() {
       <button class="logo" aria-label="Play ${st.name}">
         <img src="${st.logo}" alt="${st.name}">
         <span class="logo-overlay">
-          <img class="glyph stop" src="assets/v2/stop.svg" alt="">
+          <img class="glyph stop" src="assets/v2/stop-fill.svg" alt="">
           <img class="glyph spin" src="assets/v2/loading.svg" alt="">
         </span>
       </button>

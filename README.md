@@ -283,7 +283,9 @@ A gradient above the tab bar is present the whole way down the list and goes onl
 
 ### Artwork as the play control
 
-Tapping a station's artwork in the list starts it, and tapping it again stops it. While a station is playing, its artwork carries a dark overlay with a stop glyph, which is also what tells you at a glance which row is live. With a pointer the overlay appears on hover too, so the control is discoverable; on touch the live state is the only time it shows.
+Tapping a station's artwork in the list starts it, and tapping it again stops it. While a station is playing, its artwork carries a filled stop control: a brand-red disc with a white square, the same pairing v2's transport button used, derived from the geometry of the iOS `playback_stop` asset. That is also what tells you at a glance which row is live. With a pointer it appears on hover so the control is discoverable; on touch it shows only for the playing station.
+
+A bare white stop glyph was tried first and read as too subtle against busy album art. The filled disc carries itself, so the scrim behind it dropped from 55% to 34% black: it now only has to keep the control legible over pale artwork rather than signal "playing" on its own.
 
 Stopping pauses and resets `currentTime`, so resuming rejoins the live stream rather than replaying buffered audio. Tapping the row body (rather than the artwork) still selects and plays, as before.
 

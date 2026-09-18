@@ -312,3 +312,21 @@ The spinner is set on tap rather than waiting for the audio element's `waiting` 
 The glyph is the iOS `loading_circle` arc recoloured white for the dark scrim, with its gradient id renamed so it cannot clash with anything else on the page. Under `prefers-reduced-motion` it slows rather than stopping, since a frozen spinner would read as a hang.
 
 Verified through the full cycle: idle → "Connecting to ALT 92.3" with `aria-busy="true"` and the spinner up → "Stop ALT 92.3" with the stop glyph → back to idle.
+
+## The app shell
+
+The tab bar navigates. Radio is the screen this prototype is about; the other four exist so a study participant can move around the app instead of sitting on one screen, which is the point of having a shell at all.
+
+| Tab | What it holds |
+| :-- | :-- |
+| Home | Three shelves of station tiles. Recently played is genuinely real, built from what you actually played. Your presets mirrors the favourites the Presets chip filters on. Live in *market* fills the rest. |
+| Search | Searches all 2,721 US stations, not the loaded market. Picking one from another market switches the whole lineup to it and plays. Runs entirely offline against the baked data. |
+| Radio | The built screen |
+| Podcasts | Empty library state |
+| Playlists | Empty library state |
+
+**Podcasts and Playlists show real empty states rather than invented content.** An empty library is a legitimate app state; fabricated podcast titles would be the same mistake as the generated schedules that were removed earlier. Both would need endpoints this prototype does not have, and per-user data needs a signed-in account.
+
+Search walks the current market first when de-duplicating. National digital channels appear in many markets, and de-duplicating in plain market order attributed them to whichever came first alphabetically, so a jazz channel sitting in the New York lineup was labelled "Anchorage, AK".
+
+Station rows are built by one shared factory, so Radio and Search behave identically, same play control, same overflow sheet, same states. The bottom fade and the chip stow belong to Radio only and switch off elsewhere.

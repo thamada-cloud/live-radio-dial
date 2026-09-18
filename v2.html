@@ -316,6 +316,66 @@
   .list-fade.is-on{opacity:1}
   @media (prefers-reduced-motion: reduce){ .list-fade{transition:none} }
 
+  /* ---------- tab views ----------
+     One screen at a time. Radio is the built screen; the rest exist so the tab
+     bar goes somewhere, which matters when a study participant is meant to move
+     around the app rather than sit on a single screen. */
+  .view{display:none}
+  .view.is-active{display:block}
+  .screen-title{
+    font-size:28px;line-height:34px;font-weight:700;
+    color:var(--on-surface-brand-monochrome);
+    padding:calc(16px + env(safe-area-inset-top)) 0 16px;
+  }
+
+  /* Horizontal shelves on Home. */
+  .shelf{margin-bottom:24px}
+  .shelf h2{
+    font-size:18px;line-height:24px;font-weight:600;color:var(--on-surface-primary);
+    margin-bottom:12px;
+  }
+  .shelf .rail{
+    display:flex;gap:12px;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;
+    margin:0 -16px;padding:0 16px 4px;
+  }
+  .shelf .rail::-webkit-scrollbar{display:none}
+  .tile{width:112px;flex-shrink:0;text-align:left;background:none;border:none;padding:0;display:block}
+  .tile .art-box{
+    position:relative;width:112px;height:112px;border-radius:var(--radius-primary);
+    overflow:hidden;background:#fff;box-shadow:0 1px 3px 0 var(--surface-shadow);
+  }
+  .tile .art-box img{width:100%;height:100%;object-fit:cover;display:block}
+  .tile .name{
+    margin-top:8px;font-size:13px;line-height:17px;font-weight:600;
+    color:var(--on-surface-primary);
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+  }
+  .tile .sub{
+    font-size:12px;line-height:16px;color:var(--on-surface-secondary);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+
+  /* Search. */
+  .searchbar{
+    display:flex;align-items:center;gap:8px;padding:10px 12px;
+    background:var(--container-quaternary);border-radius:10px;
+  }
+  .searchbar .icon{width:20px;height:20px;flex-shrink:0;opacity:.7}
+  .searchbar input{
+    flex:1;min-width:0;border:none;background:none;font:inherit;font-size:16px;
+    color:var(--on-surface-primary);outline:none;
+  }
+  .search-hint{
+    margin:12px 0 4px;font-size:13px;line-height:18px;color:var(--on-surface-secondary);
+  }
+
+  /* Empty states. Real app states rather than invented content: this prototype
+     has no podcast or playlist data, and inventing some would be the same
+     mistake as the generated schedules that were removed earlier. */
+  .empty-state{padding:48px 8px;text-align:center}
+  .empty-state h2{font-size:18px;line-height:24px;font-weight:600;margin-bottom:6px}
+  .empty-state p{font-size:14px;line-height:20px;color:var(--on-surface-secondary)}
+
   .error{
     position:fixed;top:96px;left:50%;transform:translateX(-50%);z-index:60;
     background:var(--brand-red);color:#fff;padding:12px 16px;border-radius:8px;
@@ -394,7 +454,7 @@
 </head>
 <body>
 
-<main class="page">
+<main class="page view is-active" id="viewRadio">
   <div class="top-sticky">
   <section class="now">
     <div class="art"><img id="npArt" src="" alt=""></div>
@@ -423,6 +483,39 @@
   </div>
 
   <section class="guide" id="guide"></section>
+</main>
+
+<main class="page view" id="viewHome">
+  <h1 class="screen-title">Home</h1>
+  <section class="shelf" id="shelfRecent"></section>
+  <section class="shelf" id="shelfPresets"></section>
+  <section class="shelf" id="shelfMarket"></section>
+</main>
+
+<main class="page view" id="viewSearch">
+  <h1 class="screen-title">Search</h1>
+  <div class="searchbar">
+    <img class="icon" src="assets/v2/search.svg" alt="">
+    <input id="searchInput" type="search" placeholder="Stations, genres, cities" autocomplete="off">
+  </div>
+  <p class="search-hint" id="searchHint"></p>
+  <section class="guide" id="searchResults"></section>
+</main>
+
+<main class="page view" id="viewPodcasts">
+  <h1 class="screen-title">Podcasts</h1>
+  <div class="empty-state">
+    <h2>No podcasts yet</h2>
+    <p>Podcasts you follow will show up here.</p>
+  </div>
+</main>
+
+<main class="page view" id="viewPlaylists">
+  <h1 class="screen-title">Playlists</h1>
+  <div class="empty-state">
+    <h2>No playlists yet</h2>
+    <p>Playlists you create or save will show up here.</p>
+  </div>
 </main>
 
 
@@ -483,6 +576,8 @@ const state = {
   buffering: false,
   library: new Set(),
   rowStation: null,
+  view: 'radio',
+  recent: [],
   filter: { chip: null, genre: null, location: null },
   sheet: null,
   sheetPage: 'main',
@@ -618,6 +713,7 @@ function setStation(id, play) {
   state.liked = state.disliked = false;
   state.track = null;          // drop the old station's track immediately
   loadTrack(id);
+  noteRecent(id);
   if (audio && st.stream) {
     audio.src = st.stream;
     if (play) { const p = audio.play(); if (p && p.catch) p.catch(() => {}); }
@@ -909,6 +1005,47 @@ function onLocationMethod(method) {
   renderSheet(); render();
 }
 
+// One station row. Shared by the Radio guide and the Search results so both
+// behave identically: same play control, same overflow sheet, same states.
+function stationRow(st, opts) {
+  const el = document.createElement('div');
+  el.className = 'station' + (st.id === state.currentId ? ' is-playing' : '');
+  el.innerHTML = `
+    <button class="logo" aria-label="Play ${st.name}">
+      <img src="${st.logo}" alt="${st.name}">
+      <span class="logo-overlay">
+        <img class="glyph play" src="assets/v2/play-fill.svg" alt="">
+        <img class="glyph stop" src="assets/v2/stop-fill.svg" alt="">
+        <img class="glyph spin" src="assets/v2/loading.svg" alt="">
+        <span class="wave" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+      </span>
+    </button>
+    <button class="row">
+      <span class="metadata">
+        <span class="show">${st.name}</span>
+        <span class="when">${(opts && opts.sub) || st.description || st.genre}</span>
+      </span>
+      <span class="more" role="button" aria-label="More options for ${st.name}">
+        <img class="icon" src="assets/v2/row-overflow.svg" alt="">
+      </span>
+    </button>`;
+  el.dataset.id = st.id;
+  el.querySelector('.logo').addEventListener('click', (e) => {
+    e.stopPropagation();
+    toggleStation(st.id);
+  });
+  el.querySelector('.row').addEventListener('click', (e) => {
+    if (e.target.closest('.more')) {
+      e.stopPropagation();
+      state.rowStation = st.id;
+      openSheet('row');
+      return;
+    }
+    setStation(st.id, true);
+  });
+  return el;
+}
+
 function renderGuide() {
   requestAnimationFrame(updateListFade);   // list length just changed
   const host = $('guide');
@@ -918,44 +1055,7 @@ function renderGuide() {
     host.innerHTML = '<p class="empty">No stations match these filters.</p>';
     return;
   }
-  list.forEach((st) => {
-    const el = document.createElement('div');
-    el.className = 'station' + (st.id === state.currentId ? ' is-playing' : '');
-    el.innerHTML = `
-      <button class="logo" aria-label="Play ${st.name}">
-        <img src="${st.logo}" alt="${st.name}">
-        <span class="logo-overlay">
-          <img class="glyph play" src="assets/v2/play-fill.svg" alt="">
-          <img class="glyph stop" src="assets/v2/stop-fill.svg" alt="">
-          <img class="glyph spin" src="assets/v2/loading.svg" alt="">
-          <span class="wave" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
-        </span>
-      </button>
-      <button class="row">
-        <span class="metadata">
-          <span class="show">${st.name}</span>
-          <span class="when">${st.description || st.genre}</span>
-        </span>
-        <span class="more" role="button" aria-label="More options for ${st.name}">
-          <img class="icon" src="assets/v2/row-overflow.svg" alt="">
-        </span>
-      </button>`;
-    el.dataset.id = st.id;
-    el.querySelector('.logo').addEventListener('click', (e) => {
-      e.stopPropagation();
-      toggleStation(st.id);
-    });
-    el.querySelector('.row').addEventListener('click', (e) => {
-      if (e.target.closest('.more')) {
-        e.stopPropagation();
-        state.rowStation = st.id;
-        openSheet('row');
-        return;
-      }
-      setStation(st.id, true);
-    });
-    host.appendChild(el);
-  });
+  list.forEach((st) => host.appendChild(stationRow(st)));
 }
 
 // Tapping the artwork: start this station, or stop it if it is the one playing.
@@ -1062,6 +1162,7 @@ function remainingIn(show, h) {
  */
 function updateListFade() {
   const fade = $('listFade');
+  if (state.view !== 'radio') { fade.classList.remove('is-on'); return; }
   // Shown whenever the list continues, full stop. It was previously suppressed
   // when a partial row was already peeking, on the theory that the peek said
   // "more" by itself. In practice that made it appear and vanish as you
@@ -1095,6 +1196,7 @@ function watchScroll() {
     if (y <= 120) { chips.classList.remove('is-stowed'); travel = 0; return; }
     // The wide layout does not pin its header, so there is nothing to gain.
     if (matchMedia('(min-width: 1024px)').matches) return;
+    if (state.view !== 'radio') return;
 
     // Hysteresis. A single 6px threshold flipped the chips back and forth
     // during momentum scrolling, which reverses direction in small increments
@@ -1113,6 +1215,134 @@ function watchScroll() {
   updateListFade();
 }
 
+
+/* ---- tabs as screens ----
+ * Radio is the screen this prototype is about. The others exist so a study
+ * participant can move around the app instead of sitting on one screen, and so
+ * the tab bar is not decoration.
+ */
+const VIEW_IDS = { home: 'viewHome', search: 'viewSearch', radio: 'viewRadio',
+                   podcasts: 'viewPodcasts', playlists: 'viewPlaylists' };
+
+function switchView(id) {
+  state.view = id;
+  Object.entries(VIEW_IDS).forEach(([k, elId]) => {
+    $(elId).classList.toggle('is-active', k === id);
+  });
+  // The bottom fade and the chip stow belong to the Radio list only.
+  $('listFade').classList.remove('is-on');
+  $('chipsWrap').classList.remove('is-stowed');
+  window.scrollTo(0, 0);
+  renderTabBar();
+  if (id === 'home')   renderHome();
+  if (id === 'search') renderSearch();
+  if (id === 'radio')  updateListFade();
+}
+
+// Remember what was played, so Home's first shelf is real rather than invented.
+function noteRecent(id) {
+  state.recent = [id, ...state.recent.filter((x) => x !== id)].slice(0, 12);
+  try { localStorage.setItem('lrdV2Recent', JSON.stringify(state.recent)); } catch (e) {}
+}
+
+function tile(st, sub) {
+  const b = document.createElement('button');
+  b.className = 'tile';
+  b.innerHTML = `<span class="art-box"><img src="${st.logo}" alt="${st.name}"></span>` +
+                `<span class="name">${st.name}</span>` +
+                `<span class="sub">${sub || st.genre || ''}</span>`;
+  b.addEventListener('click', () => { setStation(st.id, true); switchView('radio'); });
+  return b;
+}
+
+function shelf(host, title, list, sub) {
+  host.innerHTML = '';
+  if (!list.length) return;
+  const h = document.createElement('h2');
+  h.textContent = title;
+  const rail = document.createElement('div');
+  rail.className = 'rail';
+  list.forEach((st) => rail.appendChild(tile(st, sub ? sub(st) : null)));
+  host.append(h, rail);
+}
+
+function renderHome() {
+  const byId = (id) => state.stations.find((s) => s.id === id);
+  const recent = state.recent.map(byId).filter(Boolean);
+  const presets = state.stations.filter((s) => state.favorites.has(s.id));
+  const market = currentMarket();
+
+  shelf($('shelfRecent'), 'Recently played', recent);
+  shelf($('shelfPresets'), 'Your presets', presets);
+  // Everything else in the market, minus what is already shown above.
+  const shown = new Set([...recent, ...presets].map((s) => s.id));
+  shelf($('shelfMarket'), `Live in ${market.label}`,
+        state.stations.filter((s) => !shown.has(s.id)).slice(0, 20),
+        (s) => s.dial);
+}
+
+function renderSearch() {
+  const q = $('searchInput').value.trim().toLowerCase();
+  const host = $('searchResults');
+  const hint = $('searchHint');
+  host.innerHTML = '';
+
+  if (!q) {
+    hint.textContent = 'Search every live station in the US, not just this market.';
+    return;
+  }
+  // Searches all 2,721 stations rather than the loaded market, which is the
+  // point of having them. Picking one from another market switches to it.
+  //
+  // The current market is walked first. National digital channels appear in
+  // many markets, and de-duplicating in plain market order attributed them to
+  // whichever came first alphabetically, so a jazz channel sitting in the New
+  // York lineup was labelled "Anchorage, AK".
+  const order = [
+    ...window.LRD_US.markets.filter((m) => m[0] === state.marketId),
+    ...window.LRD_US.markets.filter((m) => m[0] !== state.marketId),
+  ];
+  const seen = new Set();
+  const hits = [];
+  for (const market of order) {
+    for (const id of (window.LRD_US.lineups[market[0]] || [])) {
+      if (seen.has(id)) continue;
+      const st = window.LRD_US.stations[id];
+      if (!st) continue;
+      const hay = `${st.name} ${st.desc} ${st.genre} ${st.dial} ${market[1]} ${market[2]}`.toLowerCase();
+      if (!hay.includes(q)) continue;
+      seen.add(id);
+      hits.push({ s: st, market });
+      if (hits.length >= 40) break;
+    }
+    if (hits.length >= 40) break;
+  }
+
+  hint.textContent = hits.length ? `${hits.length} station${hits.length === 1 ? '' : 's'}`
+                                 : `Nothing matches "${$('searchInput').value.trim()}".`;
+
+  hits.forEach(({ s, market }) => {
+    const inMarket = state.stations.find((x) => x.apiId === s.id);
+    const st = inMarket || {
+      id: `s${s.id}`, apiId: s.id, name: s.name, dial: s.dial, genre: s.genre,
+      description: s.desc, logo: s.logo, stream: s.stream, shows: [],
+    };
+    const row = stationRow(st, { sub: `${s.dial} • ${market[1]}, ${market[2]}` });
+    if (!inMarket) {
+      // Outside the loaded market: switch to it first so the guide stays honest.
+      row.querySelector('.row').addEventListener('click', (e) => {
+        if (e.target.closest('.more')) return;
+        e.stopImmediatePropagation();
+        switchMarket(market[0]);
+        const found = state.stations.find((x) => x.apiId === s.id);
+        if (found) setStation(found.id, true);
+        switchView('radio');
+      }, true);
+    }
+    host.appendChild(row);
+  });
+}
+
 /* ---- bottom tab bar ---- */
 // Order and titles from iHeart/AppNavigation/TabBarConfigFiveTabs.json.
 // Radio is the active tab: this screen is the Live Radio Dial.
@@ -1123,7 +1353,8 @@ const TABS = [
   { id: 'podcasts',  label: 'Podcasts' },
   { id: 'playlists', label: 'Playlists' },
 ];
-const ACTIVE_TAB = 'radio';
+// Radio is where the prototype opens; the others are reachable from the bar.
+const LANDING_TAB = 'radio';
 
 // Inlined so the glyphs inherit the tab's colour (see the .tabbar svg rule).
 const TAB_ICONS = {
@@ -1139,12 +1370,11 @@ function renderTabBar() {
   host.innerHTML = '';
   TABS.forEach((t) => {
     const b = document.createElement('button');
-    const active = t.id === ACTIVE_TAB;
+    const active = t.id === state.view;
     if (active) b.setAttribute('aria-current', 'page');
     b.setAttribute('aria-label', t.label);
     b.innerHTML = TAB_ICONS[t.id] + `<span class="label">${t.label}</span>`;
-    // Only Radio has a screen in this prototype.
-    if (!active) b.addEventListener('click', () => flashError(`${t.label} is not built in this prototype`));
+    b.addEventListener('click', () => { if (!active) switchView(t.id); });
     host.appendChild(b);
   });
 }
@@ -1163,6 +1393,8 @@ function render() {
     if (saved) state.favorites = new Set(JSON.parse(saved));
     const lib = localStorage.getItem('lrdV2Library');
     if (lib) state.library = new Set(JSON.parse(lib));
+    const rec = localStorage.getItem('lrdV2Recent');
+    if (rec) state.recent = JSON.parse(rec);
   } catch (e) {}
 
   // data/stations.js names the home station by its own id; resolve via apiId so
@@ -1187,6 +1419,7 @@ function render() {
   audio.addEventListener('error',   () => { state.buffering = false; renderPlayState(); flashError('Unable to play this stream'); });
   if (home && home.stream) audio.src = home.stream;
 
+  $('searchInput').addEventListener('input', renderSearch);
   $('scrim').addEventListener('click', closeSheet);
   $('sheetClose').addEventListener('click', closeSheet);
   $('sheetBack').addEventListener('click', () => { state.sheetPage = 'main'; renderSheet(); });
@@ -1200,6 +1433,7 @@ function render() {
     state.disliked = !state.disliked; if (state.disliked) state.liked = false; render();
   });
 
+  state.view = LANDING_TAB;
   renderTabBar();
   watchTrack();
   watchScroll();

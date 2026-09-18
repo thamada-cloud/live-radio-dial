@@ -163,11 +163,31 @@ Icons in `assets/v2/` are the exported assets from the Figma file, committed rat
 | `pinnedNow` | `[9, 20]` | Same pinned clock as v1, so the two are comparable in a study. |
 | `showStatusBar` | `true` | The Figma frame includes an iOS status bar. Faithful on desktop, but on a real phone it sits under the device's own status bar and reads as a bug. **Turn this off before fielding on devices.** |
 
+### Stations
+
+v2 loads the **full New York market**: 60 stations, every live station the iHeartRadio app carries in market 159 that has a playable stream. Hot 97 and 107.5 WBLS are the two the API returns without one, and a row that cannot play is a dead end in a task, so they are left out.
+
+That list is not in GitHub, it comes from the same AMP API the iOS app uses (`liveStations?limit=200&marketId=159`), baked into `data/market-newyork.js` so the prototype does not depend on the API at runtime. Logos are downloaded into `assets/market` and downscaled to 496px, which is 2x the largest size the UI renders them at (13MB down to 4.3MB).
+
+**Schedules.** `data/stations.js` still holds hand-authored schedules for twelve stations; those win. The other 48 get a schedule from `data/schedule.js`, which is a **pure function of the station id**: block boundaries come from one of four fixed patterns chosen by hashing the id, titles are indexed by day-part, hosts by hash. Reload a hundred times and the grid is identical, so the comparability that mattered for the study is intact. The defect removed earlier was the randomness, not the fact that data was synthetic.
+
+Each pattern has exactly five blocks, one per day-part, so a title can be picked by index. An earlier cut derived the day-part from the start hour, which made a station print "Rock & Roll Mornings" twice in a row whenever its pattern had two blocks before 10am.
+
 ### Filter sheets
 
 The Genre and Location chips open a bottom sheet listing every value, following the sheet pattern v1 already uses (grab handle, title and close, options with counts and a checkmark, Apply footer). No sheet is designed in the Figma file for these, so the pattern is carried over rather than invented.
 
-Both sheets build their options from `data/stations.js` rather than a hardcoded list, so adding stations from another market populates the Location sheet with no code change. Right now the lineup is a single market, so that sheet offers one value and says so.
+The **Genre** sheet lists every genre in the lineup with a station count, built from the data rather than a hardcoded list.
+
+The **Location** sheet follows the iOS app rather than being a flat city list. `iHeart/SharedUI/Headers/SectionHeaderDropdownPills/LocationSheet.swift` offers three selection *methods*, each a 64px row with a location-services icon that is filled for the active method and unfilled for the others:
+
+1. **Use Current Location** — subtitle shows the resolved location
+2. **Use Zip Code** — subtitle shows the entered zip once that is the method
+3. **Choose a City** — pushes a city picker
+
+Header title is "Update Location". Row height, insets, icon size and fonts come from `HeaderSheetStyle.swift` (64px rows, 4px insets, 20px icons, 44px header with 24px padding). On iOS the city picker is two wheel pickers, country and city; a scrolling list is the web equivalent. Only New York has a lineup loaded, and the city page says so.
+
+The zip flow uses `prompt()`, which is the closest web equivalent to iOS's `IHRTextFieldAlert`. It validates five digits and rejects a code with no stations, matching how iOS gates Save on `ZipCodeValidator` and only commits inside the success branch. Worth replacing with an in-sheet field before fielding, since `prompt()` is blocked in some embedded contexts.
 
 ### Deliberate deviation from the frame
 

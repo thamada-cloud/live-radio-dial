@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Live Radio Dial v2</title>
 <script src="data/stations.js"></script>
+<script src="data/market-newyork.js"></script>
+<script src="data/schedule.js"></script>
 <style>
   /* Design tokens, as named in the Figma file (Live-Radio-Dial-v2, node 314:13377) */
   :root{
@@ -139,6 +141,13 @@
   .pill .primary .icon{width:64px;height:64px}
   .pill button:not(.primary):hover{background:rgba(255,255,255,.2)}
 
+  /* Subtle fade so the list dissolves under the control pill rather than being
+     cut off by it. Same treatment as v1. */
+  .bottom-fade{
+    position:fixed;left:0;right:0;bottom:0;height:128px;z-index:20;pointer-events:none;
+    background:linear-gradient(to top,var(--surface-app),transparent);
+  }
+
   .error{
     position:fixed;top:96px;left:50%;transform:translateX(-50%);z-index:60;
     background:var(--brand-red);color:#fff;padding:12px 16px;border-radius:8px;
@@ -183,6 +192,22 @@
     padding:12px;border-radius:8px;font-weight:500;
   }
   .sheet footer button:hover{background:#a00023}
+  /* Location sheet rows, per iOS HeaderSheetStyle:
+     locationRowCellHeight 64, locationRowEdgeInsets 4, icon 20,
+     title = body3, subtitle = caption1 in grey400. */
+  .sheet .loc-row{
+    width:100%;height:64px;display:flex;align-items:center;justify-content:space-between;
+    gap:12px;padding:0 4px;background:transparent;text-align:left;
+  }
+  .sheet .loc-row:hover{background:#f3f4f6;border-radius:8px}
+  .sheet .loc-row .text{display:flex;flex-direction:column;gap:2px;min-width:0}
+  .sheet .loc-row .t{font-size:16px;line-height:20px;color:var(--on-surface-primary)}
+  .sheet .loc-row .s{font-size:12px;line-height:16px;letter-spacing:-.35px;color:#9ca3af;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .sheet .loc-row .icon{width:20px;height:20px;flex-shrink:0;color:var(--on-surface-primary)}
+  .sheet .loc-row .icon.dim{opacity:.35}
+  .sheet .back{display:flex;align-items:center;gap:4px;padding:4px 8px 4px 0;border-radius:8px}
+  .sheet .back .icon{width:20px;height:20px}
   .sheet .note{padding:0 24px 16px;font-size:13px;line-height:18px;color:#6b7280}
   [hidden]{display:none !important}
 </style>
@@ -226,6 +251,8 @@
   <section class="guide" id="guide"></section>
 </main>
 
+<div class="bottom-fade"></div>
+
 <div class="controls">
   <div class="pill">
     <button aria-label="Cast"><img class="icon" src="assets/v2/cast.svg" alt=""></button>
@@ -235,7 +262,7 @@
          point up and the right button (next, moving down) has to point down.
          Do not "fix" this back to match the frame. -->
     <button id="btnPrev" aria-label="Previous station"><img class="icon" src="assets/v2/chevron-up.svg" alt=""></button>
-    <button class="primary" id="btnStop" aria-label="Stop"><img class="icon" src="assets/v2/stop.svg" alt=""></button>
+    <button class="primary" id="btnStop" aria-label="Play"><img class="icon" src="assets/v2/play.svg" alt=""></button>
     <button id="btnNext" aria-label="Next station"><img class="icon" src="assets/v2/chevron-down.svg" alt=""></button>
     <button aria-label="More options"><img class="icon" src="assets/v2/overflow.svg" alt=""></button>
   </div>
@@ -244,7 +271,8 @@
 <div class="scrim" id="scrim" hidden></div>
 <section class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle" hidden>
   <div class="grabber"><i></i></div>
-  <header>
+  <header style="gap:8px">
+    <button class="back" id="sheetBack" aria-label="Back" hidden><img class="icon" src="assets/v2/sheet-back.svg" alt=""></button>
     <h2 id="sheetTitle"></h2>
     <button id="sheetClose" aria-label="Close"><img class="icon" src="assets/v2/close.svg" alt=""></button>
   </header>
@@ -289,6 +317,9 @@ const state = {
   disliked: false,
   filter: { chip: null, genre: null, location: null },
   sheet: null,
+  sheetPage: 'main',
+  locationMethod: 'current',
+  zip: '',
 };
 
 const $ = (id) => document.getElementById(id);
@@ -311,10 +342,36 @@ const showAt = (station, hour) =>
 
 /* ---- data ---- */
 function buildStations() {
-  return (window.LRD_STATIONS || []).map((s) => {
-    const m = (s.dial || '').match(/(\d+(?:\.\d+)?)/);
-    return { ...s, frequency: m ? parseFloat(m[1]) : 0, isAM: /AM/i.test(s.dial || '') };
-  }).sort((a, b) => (a.isAM - b.isAM) || (a.frequency - b.frequency));
+  // The full market is the base list; data/stations.js supplies hand-authored
+  // schedules for the twelve stations it covers, matched on apiId. Everything
+  // else gets a deterministic schedule (see data/schedule.js).
+  const curated = {};
+  (window.LRD_STATIONS || []).forEach((s) => { if (s.apiId) curated[s.apiId] = s; });
+
+  const market = window.LRD_MARKET;
+  const base = market ? market.stations : (window.LRD_STATIONS || []);
+
+  return base.map((s) => {
+    const c = curated[s.apiId];
+    const merged = {
+      ...s,
+      // Prefer the curated record's logo and copy: those logos are local and
+      // hand-checked, and the curated genre labels were reviewed.
+      logo: c ? c.logo : s.logo,
+      genre: c ? c.genre : s.genre,
+      description: c ? c.description : s.description,
+      location: market ? market.label : (c && c.location) || '',
+      shows: c && c.shows ? c.shows : window.LRD_buildSchedule(s),
+      curated: !!c,
+    };
+    const m = (merged.dial || '').match(/(\d+(?:\.\d+)?)/);
+    merged.frequency = m ? parseFloat(m[1]) : 0;
+    merged.isAM = /AM/i.test(merged.dial || '');
+    merged.isDigital = !m;
+    return merged;
+  }).sort((a, b) =>
+    (a.isDigital - b.isDigital) || (a.isAM - b.isAM) || (a.frequency - b.frequency)
+  );
 }
 
 function visibleStations() {
@@ -366,11 +423,11 @@ function renderChips() {
     const b = document.createElement('button');
     b.className = 'chip';
     const active = c.id === 'genre'    ? !!state.filter.genre
-                 : c.id === 'location' ? !!state.filter.location
+                 : c.id === 'location' ? false
                  : state.filter.chip === c.id;
     b.setAttribute('aria-pressed', String(active));
     const label = c.id === 'genre'    && state.filter.genre    ? state.filter.genre
-                : c.id === 'location' && state.filter.location ? state.filter.location
+                : c.id === 'location' ? (state.locationMethod === 'zip' && state.zip ? state.zip : (window.LRD_MARKET ? window.LRD_MARKET.label : c.label))
                 : c.label;
     b.innerHTML =
       (c.leading ? `<img class="icon" src="${c.leading}" alt="">` : '') +
@@ -396,27 +453,36 @@ const SHEETS = {
     get: () => state.filter.genre,
     set: (v) => { state.filter.genre = v; },
   },
-  location: {
-    title: 'Location',
-    allLabel: 'All Locations',
-    valueOf: (s) => s.location,
-    get: () => state.filter.location,
-    set: (v) => { state.filter.location = v; },
-    // The lineup in data/stations.js is a single market, so this picker has one
-    // value to offer. It is built off the data rather than hardcoded, so adding
-    // stations from another market populates it with no code change.
-    note: 'This prototype is loaded with the New York market only.',
-  },
 };
 
-function openSheet(kind) { state.sheet = kind; renderSheet(); }
+/* The location sheet follows the iOS app rather than a flat city list.
+ * iHeart/SharedUI/Headers/SectionHeaderDropdownPills/LocationSheet.swift offers
+ * three selection METHODS, each a 64px row with a location-services icon that
+ * is filled for the active method and unfilled for the others:
+ *
+ *   1. Use Current Location  (subtitle: the resolved location)
+ *   2. Use Zip Code          (subtitle: the entered zip, when that is the method)
+ *   3. Choose a City         (pushes LocationPickerView)
+ *
+ * Header title is "Update Location". On iOS the city picker is two wheel
+ * pickers, country and city; a scrolling list is the web equivalent.
+ */
+const LOCATION_METHODS = ['current', 'zip', 'picker'];
+
+function openSheet(kind) { state.sheet = kind; state.sheetPage = 'main'; renderSheet(); }
 function closeSheet() { state.sheet = null; renderSheet(); }
 
 function renderSheet() {
   const kind = state.sheet;
   const scrim = $('scrim'), sheet = $('sheet');
   if (!kind) { scrim.hidden = sheet.hidden = true; return; }
+  scrim.hidden = sheet.hidden = false;
+  if (kind === 'location') return renderLocationSheet();
+  return renderValueSheet(kind);
+}
 
+/* A plain list of values with counts. Used by the genre sheet. */
+function renderValueSheet(kind) {
   const cfg = SHEETS[kind];
   const counts = {};
   state.stations.forEach((s) => {
@@ -427,9 +493,8 @@ function renderSheet() {
   const current = cfg.get();
 
   $('sheetTitle').textContent = cfg.title;
-  const note = $('sheetNote');
-  note.textContent = cfg.note || '';
-  note.hidden = !cfg.note;
+  $('sheetNote').hidden = true;
+  $('sheetBack').hidden = true;
 
   const host = $('sheetOptions');
   host.innerHTML = '';
@@ -446,8 +511,75 @@ function renderSheet() {
       b.addEventListener('click', () => { cfg.set(opt.v); renderSheet(); render(); });
       host.appendChild(b);
     });
+}
 
-  scrim.hidden = sheet.hidden = false;
+function renderLocationSheet() {
+  const host = $('sheetOptions');
+  host.innerHTML = '';
+  const market = window.LRD_MARKET;
+
+  if (state.sheetPage === 'cities') {
+    $('sheetTitle').textContent = 'Choose a City';
+    $('sheetBack').hidden = false;
+    $('sheetNote').hidden = false;
+    $('sheetNote').textContent =
+      'Only ' + market.label + ' has a station lineup loaded in this prototype.';
+    [market.label].forEach((label) => {
+      const b = document.createElement('button');
+      b.className = 'option';
+      b.setAttribute('aria-selected', String(state.locationMethod === 'picker'));
+      b.innerHTML = `<span class="label"><span class="name">${label}</span>` +
+        `<span class="count">(${market.stations.length})</span></span>` +
+        (state.locationMethod === 'picker' ? '<img class="icon" src="assets/v2/check.svg" alt="">' : '');
+      b.addEventListener('click', () => {
+        state.locationMethod = 'picker';
+        state.sheetPage = 'main';
+        renderSheet(); render();
+      });
+      host.appendChild(b);
+    });
+    return;
+  }
+
+  $('sheetTitle').textContent = 'Update Location';
+  $('sheetBack').hidden = true;
+  $('sheetNote').hidden = true;
+
+  const rows = [
+    { m: 'current', title: 'Use Current Location', sub: market.label },
+    { m: 'zip',     title: 'Use Zip Code',         sub: state.locationMethod === 'zip' ? state.zip : null },
+    { m: 'picker',  title: 'Choose a City',        sub: state.locationMethod === 'picker' ? market.label : null },
+  ];
+  rows.forEach((r) => {
+    const active = state.locationMethod === r.m;
+    const b = document.createElement('button');
+    b.className = 'loc-row';
+    b.innerHTML =
+      `<span class="text"><span class="t">${r.title}</span>` +
+      (r.sub ? `<span class="s">${r.sub}</span>` : '') + '</span>' +
+      `<img class="icon${active ? '' : ' dim'}" src="assets/v2/location-services${active ? '' : '-unfilled'}.svg" alt="">`;
+    b.addEventListener('click', () => onLocationMethod(r.m));
+    host.appendChild(b);
+  });
+}
+
+function onLocationMethod(method) {
+  if (method === 'picker') { state.sheetPage = 'cities'; renderSheet(); return; }
+  if (method === 'zip') {
+    const z = prompt('Enter a ZIP code');
+    if (z == null) return;
+    const trimmed = z.trim();
+    // iOS gates Save on ZipCodeValidator and only commits inside the success
+    // branch, so a well-formed but unknown code never displays as your location.
+    if (!/^\d{5}$/.test(trimmed)) { flashError('Enter a 5 digit ZIP code'); return; }
+    if (!(window.LRD_MARKET.zips || ['10001','10002','10003','11201','11211']).includes(trimmed)) {
+      flashError('No stations found for ' + trimmed);
+      return;
+    }
+    state.zip = trimmed;
+  }
+  state.locationMethod = method;
+  renderSheet(); render();
 }
 
 function renderGuide() {
@@ -507,7 +639,15 @@ function renderNowPlaying() {
   $('btnDislike').setAttribute('aria-pressed', String(state.disliked));
 }
 
+function renderTransport() {
+  const btn = $('btnStop');
+  const playing = state.playing;
+  btn.querySelector('img').src = playing ? 'assets/v2/stop.svg' : 'assets/v2/play.svg';
+  btn.setAttribute('aria-label', playing ? 'Stop' : 'Play');
+}
+
 function render() {
+  renderTransport();
   renderNowPlaying();
   renderChips();
   renderGuide();
@@ -522,7 +662,12 @@ function render() {
     if (saved) state.favorites = new Set(JSON.parse(saved));
   } catch (e) {}
 
-  const home = state.stations.find((s) => s.id === window.LRD_HOME_STATION) || state.stations[0];
+  // data/stations.js names the home station by its own id; match on apiId so it
+  // resolves against the market list too.
+  const homeCurated = (window.LRD_STATIONS || []).find((s) => s.id === window.LRD_HOME_STATION);
+  const home = state.stations.find((s) => homeCurated && s.apiId === homeCurated.apiId)
+            || state.stations.find((s) => s.id === window.LRD_HOME_STATION)
+            || state.stations[0];
   if (home) {
     state.currentId = home.id;
     if (!state.favorites.size) state.favorites.add(home.id);
@@ -530,17 +675,27 @@ function render() {
 
   audio = new Audio();
   audio.preload = 'none';
-  audio.addEventListener('playing', () => { state.playing = true; });
-  audio.addEventListener('pause',   () => { state.playing = false; });
+  // Both events must re-render: the button showed a stop glyph forever because
+  // nothing repainted it when playback actually stopped.
+  audio.addEventListener('playing', () => { state.playing = true;  renderTransport(); });
+  audio.addEventListener('pause',   () => { state.playing = false; renderTransport(); });
   audio.addEventListener('error',   () => flashError('Unable to play this stream'));
   if (home && home.stream) audio.src = home.stream;
 
   $('btnStop').addEventListener('click', () => {
-    if (state.playing) { audio.pause(); }
-    else { const p = audio.play(); if (p && p.catch) p.catch(() => {}); }
+    if (state.playing) {
+      audio.pause();
+      // Live radio stops rather than pauses: drop the buffer so resuming
+      // rejoins the stream live instead of replaying stale audio.
+      audio.currentTime = 0;
+    } else {
+      const p = audio.play();
+      if (p && p.catch) p.catch(() => {});
+    }
   });
   $('scrim').addEventListener('click', closeSheet);
   $('sheetClose').addEventListener('click', closeSheet);
+  $('sheetBack').addEventListener('click', () => { state.sheetPage = 'main'; renderSheet(); });
   $('sheetApply').addEventListener('click', closeSheet);
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeSheet(); });
 

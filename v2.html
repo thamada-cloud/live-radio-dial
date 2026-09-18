@@ -56,7 +56,7 @@
     width:248px;height:248px;border-radius:var(--radius-primary);overflow:hidden;
     filter:drop-shadow(0 1px 1.5px var(--surface-shadow));background:#fff;
   }
-  .art img{width:100%;height:100%;object-fit:cover}
+  .art img{width:100%;height:100%;object-fit:cover;background:#fff}
   .meta-row{display:flex;align-items:center;justify-content:space-between;width:100%}
   .copy{flex:1;min-width:0;position:relative;display:flex;flex-direction:column}
   .copy .title{
@@ -350,6 +350,12 @@ const RESEARCH = {
   // Matches v1 so the two versions are comparable in a study. See v1's
   // Component.RESEARCH for why the clock is pinned rather than live.
   pinnedNow: [9, 20],
+  // Pulls the actual song on air from iHeart's live-meta API. Real and live,
+  // which is the point, but it means the hero is not identical between two
+  // people looking at once. Set false for a study build, where every
+  // participant must see the same screen; the hero then falls back to the
+  // show and station, which are fixed.
+  liveTrackData: true,
 };
 
 const state = {
@@ -359,6 +365,7 @@ const state = {
   favorites: new Set(),
   liked: false,
   disliked: false,
+  track: null,
   filter: { chip: null, genre: null, location: null },
   sheet: null,
   sheetPage: 'main',
@@ -432,6 +439,8 @@ function switchMarket(id) {
   const first = state.stations[0];
   if (first) {
     state.currentId = first.id;
+    state.track = null;
+    loadTrack(first.id);
     if (audio && first.stream) { audio.pause(); audio.src = first.stream; }
     state.playing = false;
   }
@@ -446,6 +455,43 @@ function visibleStations() {
   return list;
 }
 
+/* ---- now playing track ----
+ * https://us.api.iheart.com/api/v3/live-meta/stream/<id>/trackHistory?limit=1
+ * is the same live-meta service the iOS app reads (LiveMetadataEndpoint). It
+ * serves Access-Control-Allow-Origin: *, so the browser can call it directly.
+ * Talk, news and sports stations have no track feed and return nothing, which
+ * is the expected case rather than a failure.
+ */
+let trackTimer;
+
+async function loadTrack(stationId) {
+  if (!RESEARCH.liveTrackData) return;
+  const st = state.stations.find((s) => s.id === stationId);
+  if (!st) return;
+  try {
+    const r = await fetch(`https://us.api.iheart.com/api/v3/live-meta/stream/${st.apiId}/trackHistory?limit=1`);
+    if (!r.ok) throw new Error(String(r.status));
+    const t = (await r.json()).data?.[0];
+    // The station may have changed while this was in flight.
+    if (state.currentId !== stationId) return;
+    state.track = t && t.title ? {
+      title: t.title,
+      artist: t.artist || '',
+      // The API hands back http, which a https page blocks as mixed content.
+      art: t.imagePath ? t.imagePath.replace(/^http:/, 'https:') : null,
+    } : null;
+  } catch (e) {
+    if (state.currentId === stationId) state.track = null;
+  }
+  renderNowPlaying();
+}
+
+function watchTrack() {
+  clearInterval(trackTimer);
+  if (!RESEARCH.liveTrackData) return;
+  trackTimer = setInterval(() => loadTrack(state.currentId), 30000);
+}
+
 /* ---- audio ---- */
 let audio;
 function setStation(id, play) {
@@ -453,6 +499,8 @@ function setStation(id, play) {
   if (!st) return;
   state.currentId = id;
   state.liked = state.disliked = false;
+  state.track = null;          // drop the old station's track immediately
+  loadTrack(id);
   if (audio && st.stream) {
     audio.src = st.stream;
     if (play) { const p = audio.play(); if (p && p.catch) p.catch(() => {}); }
@@ -723,21 +771,29 @@ function renderNowPlaying() {
   if (!st) return;
   const h = nowHours();
   const show = showAt(st, h);
+  const track = state.track;
 
-  $('npArt').src = st.logo;
-  $('npArt').alt = st.name;
-  $('npTitle').textContent = show ? show.title : st.name;
-  $('npSubtitle').textContent = show ? st.name : (st.description || st.genre);
+  // A song on air is the most specific thing to lead with, so it takes the
+  // headline and the artwork. The show and station move to the line beneath,
+  // which is how the Figma hero was drawn. Talk and news stations have no track
+  // feed, so they fall back to the show, then to the station name.
+  $('npArt').src = track && track.art ? track.art : st.logo;
+  $('npArt').alt = track ? `${track.title} artwork` : st.name;
+  $('npTitle').textContent = track ? track.title : (show ? show.title : st.name);
+  $('npSubtitle').textContent =
+    track  ? [track.artist, st.name].filter(Boolean).join(' • ')
+  : show   ? st.name
+  :          (st.description || st.genre);
 
-  // Wide-screen only: how much of the show is left, the dial position and the
-  // genre, then the station's description underneath.
+  // Wide-screen only.
   const bits = [];
+  if (track && show) bits.push(`<span>${show.title}</span>`);
   const left = show ? remainingIn(show, h) : null;
-  if (left) bits.push(`<span>${left} left</span>`);
-  if (st.dial)  bits.push('<span class="sep"></span>', `<span>${st.dial}</span>`);
-  if (st.genre) bits.push('<span class="sep"></span>', `<span class="pill">${st.genre}</span>`);
+  if (left) { if (bits.length) bits.push('<span class="sep"></span>'); bits.push(`<span>${left} left</span>`); }
+  if (st.dial)  { if (bits.length) bits.push('<span class="sep"></span>'); bits.push(`<span>${st.dial}</span>`); }
+  if (st.genre) { if (bits.length) bits.push('<span class="sep"></span>'); bits.push(`<span class="pill">${st.genre}</span>`); }
   $('npMeta').innerHTML = bits.join('');
-  $('npDesc').textContent = show ? (st.description || '') : '';
+  $('npDesc').textContent = st.description || '';
 
   $('btnLike').setAttribute('aria-pressed', String(state.liked));
   $('btnDislike').setAttribute('aria-pressed', String(state.disliked));
@@ -818,6 +874,7 @@ function render() {
   if (home) {
     state.currentId = home.id;
     if (!state.favorites.size) state.favorites.add(home.id);
+    loadTrack(home.id);   // the boot path had no fetch; only setStation did
   }
 
   audio = new Audio();
@@ -841,6 +898,7 @@ function render() {
   });
 
   renderTabBar();
+  watchTrack();
   render();
 })();
 </script>

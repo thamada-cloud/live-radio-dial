@@ -226,9 +226,21 @@ The tab glyphs are inlined rather than referenced as `<img>`. An SVG loaded thro
 
 The artwork, metadata, thumbs and filter chips hold position while only the station rows scroll under them.
 
-### Where the design and the data do not line up
+### Now playing
 
-**The now-playing block is track-level in Figma** (a song title, then a list of artists) but the dataset is schedule-level. Those two lines currently show the show title, then host and station. A real now-playing feed would fill the same two lines with no layout change. Marked in the source.
+The hero leads with the **song actually on air**, pulled live from the same live-meta service the iOS app reads:
+
+```
+GET https://us.api.iheart.com/api/v3/live-meta/stream/<id>/trackHistory?limit=1
+```
+
+It serves `Access-Control-Allow-Origin: *`, so the browser calls it directly. The track title is the headline, the artist and station sit beneath it, and the album art replaces the station logo. The show, time remaining, dial position and genre move to the line below.
+
+Talk, news and sports stations have no track feed and return nothing, which is the expected case rather than a failure: those fall back to the show name and station, with the station logo as artwork. 710 WOR shows "Mark Simone / 710 WOR"; Z100 shows the song.
+
+Two details worth knowing. The API returns album art over `http`, which an `https` page blocks as mixed content, so the URL is upgraded on the way in. And the request is keyed to the station that was selected when it was fired, so stepping quickly between stations cannot land one station's track on another.
+
+`RESEARCH.liveTrackData` turns this off. It is live data, so two people looking at once do not see an identical hero. **Set it to `false` for a study build**, where the hero then falls back to the show and station, both of which are fixed.
 
 ### Responsive layout
 

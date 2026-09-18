@@ -165,11 +165,19 @@ Icons in `assets/v2/` are the exported assets from the Figma file, committed rat
 
 ### Stations
 
-v2 loads the **full New York market**: 60 stations, every live station the iHeartRadio app carries in market 159 that has a playable stream. Hot 97 and 107.5 WBLS are the two the API returns without one, and a row that cannot play is a dead end in a task, so they are left out.
+v2 loads **every live US station the iHeartRadio app carries**: 2,721 unique stations across 251 markets, in `data/stations-us.js`.
 
-That list is not in GitHub, it comes from the same AMP API the iOS app uses (`liveStations?limit=200&marketId=159`), baked into `data/market-newyork.js` so the prototype does not depend on the API at runtime. Logos are downloaded into `assets/market` and downscaled to 496px, which is 2x the largest size the UI renders them at (13MB down to 4.3MB).
+That list is not in GitHub, it comes from the same AMP API the iOS app uses. A market's lineup is not simply its local stations: the API merges in a curated slice of the national digital channels, so New York returns 62 while only 32 stations actually list New York as their market. Each market was therefore fetched on its own endpoint rather than derived from one unfiltered dump.
 
-**Schedules.** `data/stations.js` still holds hand-authored schedules for twelve stations; those win. The other 48 get a schedule from `data/schedule.js`, which is a **pure function of the station id**: block boundaries come from one of four fixed patterns chosen by hashing the id, titles are indexed by day-part, hosts by hash. Reload a hundred times and the grid is identical, so the comparability that mattered for the study is intact. The defect removed earlier was the randomness, not the fact that data was synthetic.
+```
+https://us.api.iheart.com/api/v2/content/liveStations?limit=200&marketId=<id>
+```
+
+311 rows were dropped because the API exposes no playable stream for them (Hot 97 and 107.5 WBLS in New York among them). A row that cannot play is a dead end in a task, so they are left out rather than shown broken.
+
+The file is 458KB, 140KB gzipped, which Pages serves compressed. Stations are stored as arrays and URLs are prefix-packed, because spelling out `https://playerservices.streamtheworld.com/api/livestream-redirect/` 532 times was most of the file. Both unpack once on load. Logos are hotlinked to iHeart's CDN rather than committed, since 2,721 logos is far too many and v2 already needs the network for audio. **v2 therefore needs a connection; v1 still runs fully offline.**
+
+**Schedules.** `data/stations.js` still holds hand-authored schedules for twelve New York stations, and those win. Everything else gets a schedule from `data/schedule.js`, which is a **pure function of the station id**: block boundaries come from one of four fixed patterns chosen by hashing the id, titles are indexed by day-part, hosts by hash. Reload a hundred times and the lineup is identical, so the comparability that mattered for the study is intact. The defect removed earlier was the randomness, not that the data was synthetic.
 
 Each pattern has exactly five blocks, one per day-part, so a title can be picked by index. An earlier cut derived the day-part from the start hour, which made a station print "Rock & Roll Mornings" twice in a row whenever its pattern had two blocks before 10am.
 
@@ -185,7 +193,9 @@ The **Location** sheet follows the iOS app rather than being a flat city list. `
 2. **Use Zip Code** — subtitle shows the entered zip once that is the method
 3. **Choose a City** — pushes a city picker
 
-Header title is "Update Location". Row height, insets, icon size and fonts come from `HeaderSheetStyle.swift` (64px rows, 4px insets, 20px icons, 44px header with 24px padding). On iOS the city picker is two wheel pickers, country and city; a scrolling list is the web equivalent. Only New York has a lineup loaded, and the city page says so.
+Header title is "Update Location". Row height, insets, icon size and fonts come from `HeaderSheetStyle.swift` (64px rows, 4px insets, 20px icons, 44px header with 24px padding). On iOS the city picker is two wheel pickers, country and city; on the web it is a searchable list, since 251 markets is too many to scroll.
+
+Picking a city switches the whole lineup. `DETECTED_MARKET` stands in for CoreLocation: the prototype cannot detect a real location, so "Use Current Location" always resolves to New York, which is also the market the app opens on. Resolving a ZIP to a market needs a lookup the AMP station endpoints do not expose, so only the detected market's ZIPs are accepted; that needs a real geocode before it is more than a demo.
 
 The zip flow uses `prompt()`, which is the closest web equivalent to iOS's `IHRTextFieldAlert`. It validates five digits and rejects a code with no stations, matching how iOS gates Save on `ZipCodeValidator` and only commits inside the success branch. Worth replacing with an in-sheet field before fielding, since `prompt()` is blocked in some embedded contexts.
 

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Live Radio Dial v2</title>
 <script src="data/stations.js"></script>
-<script src="data/market-newyork.js"></script>
+<script src="data/stations-us.js"></script>
 <script src="data/schedule.js"></script>
 <style>
   /* Design tokens, as named in the Figma file (Live-Radio-Dial-v2, node 314:13377) */
@@ -208,6 +208,11 @@
   .sheet .loc-row .icon.dim{opacity:.35}
   .sheet .back{display:flex;align-items:center;gap:4px;padding:4px 8px 4px 0;border-radius:8px}
   .sheet .back .icon{width:20px;height:20px}
+  .sheet .city-search{
+    width:100%;margin-bottom:8px;padding:10px 12px;font:inherit;font-size:16px;
+    border:1px solid #d1d5db;border-radius:8px;background:#fff;color:var(--on-surface-primary);
+  }
+  .sheet .city-search:focus{outline:2px solid var(--brand-red);outline-offset:-1px}
   .sheet .note{padding:0 24px 16px;font-size:13px;line-height:18px;color:#6b7280}
   [hidden]{display:none !important}
 </style>
@@ -318,6 +323,8 @@ const state = {
   filter: { chip: null, genre: null, location: null },
   sheet: null,
   sheetPage: 'main',
+  marketId: 159,            // New York, the default lineup
+  citySearch: '',
   locationMethod: 'current',
   zip: '',
 };
@@ -341,37 +348,54 @@ const showAt = (station, hour) =>
   station.shows.find((s) => hour >= s.start && hour < s.end) || station.shows[0];
 
 /* ---- data ---- */
+function currentMarket() {
+  const m = window.LRD_US.markets.find((x) => x[0] === state.marketId);
+  return m ? { id: m[0], city: m[1], state: m[2], count: m[3], label: `${m[1]}, ${m[2]}` }
+           : { id: state.marketId, city: '', state: '', count: 0, label: '' };
+}
+
 function buildStations() {
-  // The full market is the base list; data/stations.js supplies hand-authored
-  // schedules for the twelve stations it covers, matched on apiId. Everything
-  // else gets a deterministic schedule (see data/schedule.js).
+  // Hand-authored schedules win where they exist; everything else is
+  // deterministic (see data/schedule.js). Matched on the API station id.
   const curated = {};
   (window.LRD_STATIONS || []).forEach((s) => { if (s.apiId) curated[s.apiId] = s; });
 
-  const market = window.LRD_MARKET;
-  const base = market ? market.stations : (window.LRD_STATIONS || []);
+  const ids = window.LRD_US.lineups[state.marketId] || [];
+  const label = currentMarket().label;
 
-  return base.map((s) => {
-    const c = curated[s.apiId];
-    const merged = {
-      ...s,
-      // Prefer the curated record's logo and copy: those logos are local and
-      // hand-checked, and the curated genre labels were reviewed.
-      logo: c ? c.logo : s.logo,
+  return ids.map((id) => {
+    const s = window.LRD_US.stations[id];
+    if (!s) return null;
+    const c = curated[id];
+    const st = {
+      id: `s${id}`, apiId: id, name: s.name, dial: s.dial,
+      callLetters: s.call,
       genre: c ? c.genre : s.genre,
-      description: c ? c.description : s.description,
-      location: market ? market.label : (c && c.location) || '',
-      shows: c && c.shows ? c.shows : window.LRD_buildSchedule(s),
+      description: c ? c.description : s.desc,
+      logo: s.logo, stream: s.stream, location: label,
+      shows: c && c.shows ? c.shows : window.LRD_buildSchedule({ id: `s${id}`, genre: s.genre }),
       curated: !!c,
     };
-    const m = (merged.dial || '').match(/(\d+(?:\.\d+)?)/);
-    merged.frequency = m ? parseFloat(m[1]) : 0;
-    merged.isAM = /AM/i.test(merged.dial || '');
-    merged.isDigital = !m;
-    return merged;
-  }).sort((a, b) =>
+    const m = (st.dial || '').match(/(\d+(?:\.\d+)?)/);
+    st.frequency = m ? parseFloat(m[1]) : 0;
+    st.isAM = /AM/i.test(st.dial || '');
+    st.isDigital = !m;
+    return st;
+  }).filter(Boolean).sort((a, b) =>
     (a.isDigital - b.isDigital) || (a.isAM - b.isAM) || (a.frequency - b.frequency)
   );
+}
+
+function switchMarket(id) {
+  state.marketId = id;
+  state.stations = buildStations();
+  const first = state.stations[0];
+  if (first) {
+    state.currentId = first.id;
+    if (audio && first.stream) { audio.pause(); audio.src = first.stream; }
+    state.playing = false;
+  }
+  state.filter = { chip: null, genre: null, location: null };
 }
 
 function visibleStations() {
@@ -427,7 +451,7 @@ function renderChips() {
                  : state.filter.chip === c.id;
     b.setAttribute('aria-pressed', String(active));
     const label = c.id === 'genre'    && state.filter.genre    ? state.filter.genre
-                : c.id === 'location' ? (state.locationMethod === 'zip' && state.zip ? state.zip : (window.LRD_MARKET ? window.LRD_MARKET.label : c.label))
+                : c.id === 'location' ? (state.locationMethod === 'zip' && state.zip ? state.zip : currentMarket().label)
                 : c.label;
     b.innerHTML =
       (c.leading ? `<img class="icon" src="${c.leading}" alt="">` : '') +
@@ -467,7 +491,11 @@ const SHEETS = {
  * Header title is "Update Location". On iOS the city picker is two wheel
  * pickers, country and city; a scrolling list is the web equivalent.
  */
-const LOCATION_METHODS = ['current', 'zip', 'picker'];
+// Stands in for CoreLocation. The prototype cannot detect a real location, so
+// "Use Current Location" always resolves here, and it is also the market the
+// app opens on.
+const DETECTED_MARKET = { id: 159, label: 'New York, NY' };
+const DETECTED_ZIPS = ['10001', '10002', '10003', '10011', '11201', '11211', '07030'];
 
 function openSheet(kind) { state.sheet = kind; state.sheetPage = 'main'; renderSheet(); }
 function closeSheet() { state.sheet = null; renderSheet(); }
@@ -516,24 +544,54 @@ function renderValueSheet(kind) {
 function renderLocationSheet() {
   const host = $('sheetOptions');
   host.innerHTML = '';
-  const market = window.LRD_MARKET;
+  const market = currentMarket();
 
   if (state.sheetPage === 'cities') {
     $('sheetTitle').textContent = 'Choose a City';
     $('sheetBack').hidden = false;
-    $('sheetNote').hidden = false;
-    $('sheetNote').textContent =
-      'Only ' + market.label + ' has a station lineup loaded in this prototype.';
-    [market.label].forEach((label) => {
+    $('sheetNote').hidden = true;
+
+    // 251 markets is too many to scroll, so the list is filtered by a search
+    // field. iOS uses two wheel pickers (country then city) for the same job.
+    const search = document.createElement('input');
+    search.className = 'city-search';
+    search.type = 'search';
+    search.placeholder = 'Search cities';
+    search.value = state.citySearch;
+    search.addEventListener('input', () => {
+      state.citySearch = search.value;
+      renderLocationSheet();
+      const again = host.querySelector('.city-search');
+      if (again) { again.focus(); again.setSelectionRange(again.value.length, again.value.length); }
+    });
+    host.appendChild(search);
+
+    const q = state.citySearch.trim().toLowerCase();
+    const matches = window.LRD_US.markets
+      .filter((m) => !q || `${m[1]}, ${m[2]}`.toLowerCase().includes(q))
+      .slice(0, 60);
+
+    if (!matches.length) {
+      const p = document.createElement('p');
+      p.className = 'empty';
+      p.textContent = 'No cities match "' + state.citySearch + '".';
+      host.appendChild(p);
+      return;
+    }
+
+    matches.forEach((m) => {
+      const selected = m[0] === state.marketId;
       const b = document.createElement('button');
       b.className = 'option';
-      b.setAttribute('aria-selected', String(state.locationMethod === 'picker'));
-      b.innerHTML = `<span class="label"><span class="name">${label}</span>` +
-        `<span class="count">(${market.stations.length})</span></span>` +
-        (state.locationMethod === 'picker' ? '<img class="icon" src="assets/v2/check.svg" alt="">' : '');
+      b.setAttribute('aria-selected', String(selected));
+      b.innerHTML = `<span class="label"><span class="name">${m[1]}, ${m[2]}</span>` +
+        `<span class="count">(${m[3]})</span></span>` +
+        (selected ? '<img class="icon" src="assets/v2/check.svg" alt="">' : '');
       b.addEventListener('click', () => {
+        switchMarket(m[0]);
         state.locationMethod = 'picker';
         state.sheetPage = 'main';
+        state.citySearch = '';
         renderSheet(); render();
       });
       host.appendChild(b);
@@ -546,7 +604,7 @@ function renderLocationSheet() {
   $('sheetNote').hidden = true;
 
   const rows = [
-    { m: 'current', title: 'Use Current Location', sub: market.label },
+    { m: 'current', title: 'Use Current Location', sub: DETECTED_MARKET.label },
     { m: 'zip',     title: 'Use Zip Code',         sub: state.locationMethod === 'zip' ? state.zip : null },
     { m: 'picker',  title: 'Choose a City',        sub: state.locationMethod === 'picker' ? market.label : null },
   ];
@@ -570,14 +628,19 @@ function onLocationMethod(method) {
     if (z == null) return;
     const trimmed = z.trim();
     // iOS gates Save on ZipCodeValidator and only commits inside the success
-    // branch, so a well-formed but unknown code never displays as your location.
+    // branch, so a well-formed but unresolvable code never displays as your
+    // location. Same rule here. Resolving a ZIP to a market needs a lookup the
+    // AMP station endpoints do not expose, so only the detected market's ZIPs
+    // are accepted; wire a real geocode before this is more than a demo.
     if (!/^\d{5}$/.test(trimmed)) { flashError('Enter a 5 digit ZIP code'); return; }
-    if (!(window.LRD_MARKET.zips || ['10001','10002','10003','11201','11211']).includes(trimmed)) {
+    if (!DETECTED_ZIPS.includes(trimmed)) {
       flashError('No stations found for ' + trimmed);
       return;
     }
+    switchMarket(DETECTED_MARKET.id);
     state.zip = trimmed;
   }
+  if (method === 'current') switchMarket(DETECTED_MARKET.id);
   state.locationMethod = method;
   renderSheet(); render();
 }
@@ -662,11 +725,10 @@ function render() {
     if (saved) state.favorites = new Set(JSON.parse(saved));
   } catch (e) {}
 
-  // data/stations.js names the home station by its own id; match on apiId so it
-  // resolves against the market list too.
+  // data/stations.js names the home station by its own id; resolve via apiId so
+  // it matches the market lineup.
   const homeCurated = (window.LRD_STATIONS || []).find((s) => s.id === window.LRD_HOME_STATION);
   const home = state.stations.find((s) => homeCurated && s.apiId === homeCurated.apiId)
-            || state.stations.find((s) => s.id === window.LRD_HOME_STATION)
             || state.stations[0];
   if (home) {
     state.currentId = home.id;

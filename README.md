@@ -163,7 +163,12 @@ Icons in `assets/v2/` are the exported assets from the Figma file, committed rat
 | `pinnedNow` | `[9, 20]` | Same pinned clock as v1, so the two are comparable in a study. |
 | `showStatusBar` | `true` | The Figma frame includes an iOS status bar. Faithful on desktop, but on a real phone it sits under the device's own status bar and reads as a bug. **Turn this off before fielding on devices.** |
 
-Two places where the design and the data do not line up, both marked in the source:
+### Filter sheets
 
-- **The now-playing block is track-level in Figma** (a song title, then a list of artists) but the dataset is schedule-level. Those two lines currently show the show title, then host and station. A real now-playing feed would fill the same two lines with no layout change.
-- **The genre chip has a chevron implying a picker**, but no picker sheet exists in this frame, so tapping cycles through the genres in the lineup. The location chip has only one market to offer, so it explains itself rather than filtering.
+The Genre and Location chips open a bottom sheet listing every value, following the sheet pattern v1 already uses (grab handle, title and close, options with counts and a checkmark, Apply footer). No sheet is designed in the Figma file for these, so the pattern is carried over rather than invented.
+
+Both sheets build their options from `data/stations.js` rather than a hardcoded list, so adding stations from another market populates the Location sheet with no code change. Right now the lineup is a single market, so that sheet offers one value and says so.
+
+### Where the design and the data do not line up
+
+**The now-playing block is track-level in Figma** (a song title, then a list of artists) but the dataset is schedule-level. Those two lines currently show the show title, then host and station. A real now-playing feed would fill the same two lines with no layout change. Marked in the source.

@@ -119,11 +119,25 @@
   /* ---------- station guide (a list in v2, not a grid) ---------- */
   .guide{display:flex;flex-direction:column;gap:8px}
   .station{display:flex;gap:8px;align-items:center}
+  /* The artwork is the play control: tap to start a station, tap again to stop
+     it. The overlay is what tells you which station is live. */
   .station .logo{
+    position:relative;display:block;padding:0;
     width:56px;height:56px;flex-shrink:0;border-radius:var(--radius-primary);
     background:#fff;box-shadow:0 1px 3px 0 var(--surface-shadow);overflow:hidden;
+    cursor:pointer;
   }
-  .station .logo img{width:100%;height:100%;object-fit:cover}
+  .station .logo img{width:100%;height:100%;object-fit:cover;display:block}
+  .station .logo .logo-overlay{
+    position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    background:rgba(0,0,0,.55);opacity:0;transition:opacity .16s ease-out;
+  }
+  .station .logo .glyph{width:26px;height:26px;object-fit:contain}
+  /* Shown while this station is the one playing. */
+  .station.is-live .logo .logo-overlay{opacity:1}
+  /* And on hover, so the control is discoverable with a pointer. */
+  @media (hover:hover){ .station .logo:hover .logo-overlay{opacity:1} }
+  @media (prefers-reduced-motion: reduce){ .station .logo .logo-overlay{transition:none} }
   .station .row{
     flex:1;min-width:0;height:56px;min-height:44px;display:flex;align-items:center;gap:8px;
     background:var(--container-quaternary);border-radius:var(--radius-primary);
@@ -855,7 +869,10 @@ function renderGuide() {
     const el = document.createElement('div');
     el.className = 'station' + (st.id === state.currentId ? ' is-playing' : '');
     el.innerHTML = `
-      <div class="logo"><img src="${st.logo}" alt="${st.name}"></div>
+      <button class="logo" aria-label="Play ${st.name}">
+        <img src="${st.logo}" alt="${st.name}">
+        <span class="logo-overlay"><img class="glyph" src="assets/v2/stop.svg" alt=""></span>
+      </button>
       <button class="row">
         <span class="metadata">
           <span class="show">${st.name}</span>
@@ -865,6 +882,11 @@ function renderGuide() {
           <img class="icon" src="assets/v2/row-overflow.svg" alt="">
         </span>
       </button>`;
+    el.dataset.id = st.id;
+    el.querySelector('.logo').addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleStation(st.id);
+    });
     el.querySelector('.row').addEventListener('click', (e) => {
       if (e.target.closest('.more')) {
         e.stopPropagation();
@@ -875,6 +897,36 @@ function renderGuide() {
       setStation(st.id, true);
     });
     host.appendChild(el);
+  });
+}
+
+// Tapping the artwork: start this station, or stop it if it is the one playing.
+function toggleStation(id) {
+  if (id === state.currentId && state.playing) {
+    audio.pause();
+    // Live radio stops rather than pauses, so resuming rejoins the stream live.
+    audio.currentTime = 0;
+    return;
+  }
+  if (id === state.currentId) {
+    const p = audio.play();
+    if (p && p.catch) p.catch(() => {});
+    return;
+  }
+  setStation(id, true);
+}
+
+// Only the overlay changes, so repaint that rather than rebuilding 60 rows and
+// disturbing the scroll position.
+function renderPlayState() {
+  document.querySelectorAll('.station').forEach((el) => {
+    const live = state.playing && el.dataset.id === state.currentId;
+    el.classList.toggle('is-live', live);
+    const btn = el.querySelector('.logo');
+    if (btn) {
+      const name = el.querySelector('.show') ? el.querySelector('.show').textContent : 'station';
+      btn.setAttribute('aria-label', (live ? 'Stop ' : 'Play ') + name);
+    }
   });
 }
 
@@ -1069,8 +1121,8 @@ function render() {
 
   audio = new Audio();
   audio.preload = 'none';
-  audio.addEventListener('playing', () => { state.playing = true; });
-  audio.addEventListener('pause',   () => { state.playing = false; });
+  audio.addEventListener('playing', () => { state.playing = true;  renderPlayState(); });
+  audio.addEventListener('pause',   () => { state.playing = false; renderPlayState(); });
   audio.addEventListener('error',   () => flashError('Unable to play this stream'));
   if (home && home.stream) audio.src = home.stream;
 

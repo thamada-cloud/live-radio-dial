@@ -282,3 +282,11 @@ Implemented as a plain scroll listener with no `requestAnimationFrame` throttle.
 A gradient above the tab bar tells you the list continues, but only when that is genuinely unclear. If a decent slice of the next row is already peeking above the tab bar, the peek says "more below" perfectly well and the fade would just be haze over content, so it stays off. It appears when a row boundary happens to land near the fold, which is the case that makes a list with 50 more stations look finished.
 
 The threshold is 18px of visible partial row. Measured walking down the list: peeks of 53, 33, 24 and 39px leave it off, a 3px peek turns it on, and it goes off again at the true bottom.
+
+### Artwork as the play control
+
+Tapping a station's artwork in the list starts it, and tapping it again stops it. While a station is playing, its artwork carries a dark overlay with a stop glyph, which is also what tells you at a glance which row is live. With a pointer the overlay appears on hover too, so the control is discoverable; on touch the live state is the only time it shows.
+
+Stopping pauses and resets `currentTime`, so resuming rejoins the live stream rather than replaying buffered audio. Tapping the row body (rather than the artwork) still selects and plays, as before.
+
+Play state repaints only the overlay and the button's label rather than rebuilding all 60 rows, so starting or stopping a station cannot disturb the scroll position.

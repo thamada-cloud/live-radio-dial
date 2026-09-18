@@ -106,12 +106,12 @@
   .guide{display:flex;flex-direction:column;gap:8px}
   .station{display:flex;gap:8px;align-items:center}
   .station .logo{
-    width:48px;height:48px;flex-shrink:0;border-radius:var(--radius-primary);
+    width:56px;height:56px;flex-shrink:0;border-radius:var(--radius-primary);
     background:#fff;box-shadow:0 1px 3px 0 var(--surface-shadow);overflow:hidden;
   }
   .station .logo img{width:100%;height:100%;object-fit:cover}
   .station .row{
-    flex:1;min-width:0;height:48px;min-height:44px;display:flex;align-items:center;gap:8px;
+    flex:1;min-width:0;height:56px;min-height:44px;display:flex;align-items:center;gap:8px;
     background:var(--container-quaternary);border-radius:var(--radius-primary);
     padding:0 16px;border:2px solid transparent;text-align:left;
   }
@@ -215,7 +215,7 @@
   }
 
   /* Two columns of rows once there is room, so a wide window does not leave a
-     single column of 48px rows stranded in the middle. */
+     single column of 56px rows stranded in the middle. */
   @media (min-width: 1280px){
     .guide{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 16px}
   }

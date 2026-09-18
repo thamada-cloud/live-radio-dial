@@ -6,7 +6,12 @@ Originally prototyped in Claude Design; extracted here so it can be developed in
 
 ## Where it runs
 
-**Live:** https://thamada-cloud.github.io/live-radio-dial/
+Two versions, both deployed:
+
+| | Live | Source |
+| :-- | :-- | :-- |
+| **v1** — two-axis EPG grid | https://thamada-cloud.github.io/live-radio-dial/ | `index.html` |
+| **v2** — station list with filter chips | https://thamada-cloud.github.io/live-radio-dial/v2.html | `v2.html` |
 
 Served from `main` by GitHub Pages, which is why this repo is public: unmoderated participants have to reach the prototype with no login. Pushing to `main` redeploys it.
 
@@ -24,7 +29,8 @@ The Claude Design export was a single 823KB HTML file with everything inlined as
 
 | Path | What it is |
 | :-- | :-- |
-| `index.html` | The whole app: `x-dc` template markup plus the `DCLogic` component class. This is the file you edit. |
+| `index.html` | v1: `x-dc` template markup plus the `DCLogic` component class. |
+| `v2.html` | v2: standalone vanilla HTML/CSS/JS. No React, no runtime. |
 | `vendor/dc-runtime.js` | Claude Design runtime. Interprets `sc-if`, `sc-for`, `{{ }}` bindings and the `DCLogic` class. Do not edit. |
 | `vendor/react.js`, `vendor/react-dom.js` | React 18.3.1 UMD builds. The runtime would otherwise fetch these from unpkg. |
 | `assets/*.png` | Station logos, favorite icons, ad creative. |
@@ -126,3 +132,38 @@ Like and dislike previously toggled via `fill="{{ likeFill }}"`. That cannot wor
 `dial_button_icon` (Go to Station) deliberately keeps its brand red disc and white triangle rather than inheriting `currentColor`, which would flatten it into a solid blob.
 
 **The filter icon is the one exception.** The iOS app has no filter icon in its catalog and uses no filter SF Symbol, so there was nothing to copy. The glyph in the header is drawn to match the set's weight (2px bars, 1px radius, 24x24). Worth knowing that the filter control itself has no counterpart in the shipping app.
+
+## v2 — the list version
+
+Built from Figma: [Live-Radio-Dial-v2, node 314:13377](https://www.figma.com/design/5kls3jYtOTAuoFjtHAW2HS/Live-Radio-Dial-v2?node-id=314-13377). Lives at `v2.html` and shares `data/stations.js` with v1, so the lineup and schedules stay in one place.
+
+**v2 is a different information architecture, not a restyle.** The changes that matter:
+
+| | v1 | v2 |
+| :-- | :-- | :-- |
+| Layout | Two-axis grid, stations x time | One row per station |
+| Time | 14 columns, ~11 screen-widths of horizontal scroll | A time range on each row, no horizontal scroll |
+| Filtering | Icon opening a bottom sheet | Scrolling chip row, always visible |
+| Now playing | 300x250 slot (ad-shaped) | 248x248 square |
+| Transport | Talkback, prev, play, next, more | Cast, prev, **stop**, next, more |
+| Thumbs | Playlist, like, dislike | Dislike, like (no playlist) |
+
+**The time axis is gone.** Each row shows the show that is on now plus its time range; there is no way to look at what is on later. Since the research plan's hypothesis is about a guide that shows what is coming up, and its time-axis task asks for a show ten hours out, v2 does not answer the same question v1 does. That is worth settling before either goes into a study.
+
+### Implementation notes
+
+Deliberately vanilla. v1 runs on the Claude Design `x-dc` runtime; keeping v2 independent means neither version can break the other, and v2's UI (a list, chips, a control pill) does not need a framework.
+
+Icons in `assets/v2/` are the exported assets from the Figma file, committed rather than hotlinked because Figma's asset URLs expire in about seven days. They already ship in the right colours per context (dark for the light header and rows, white for the dark pill), so they are used as `<img>` with no recolouring.
+
+`RESEARCH` at the top of the script mirrors v1:
+
+| Flag | Set to | Why |
+| :-- | :-- | :-- |
+| `pinnedNow` | `[9, 20]` | Same pinned clock as v1, so the two are comparable in a study. |
+| `showStatusBar` | `true` | The Figma frame includes an iOS status bar. Faithful on desktop, but on a real phone it sits under the device's own status bar and reads as a bug. **Turn this off before fielding on devices.** |
+
+Two places where the design and the data do not line up, both marked in the source:
+
+- **The now-playing block is track-level in Figma** (a song title, then a list of artists) but the dataset is schedule-level. Those two lines currently show the show title, then host and station. A real now-playing feed would fill the same two lines with no layout change.
+- **The genre chip has a chevron implying a picker**, but no picker sheet exists in this frame, so tapping cycles through the genres in the lineup. The location chip has only one market to offer, so it explains itself rather than filtering.

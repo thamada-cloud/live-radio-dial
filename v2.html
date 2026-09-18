@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Live Radio Dial v2</title>
+<script src="data/stations.js"></script>
+<style>
+  /* Design tokens, as named in the Figma file (Live-Radio-Dial-v2, node 314:13377) */
+  :root{
+    --surface-app:#f6f8f9;
+    --surface-app-overlay:rgba(0,0,0,.7);
+    --surface-shadow:rgba(0,0,0,.12);
+    --on-surface-primary:#27292d;
+    --on-surface-secondary:#3f4447;
+    --on-surface-brand-monochrome:#000;
+    --container-quaternary:#e6eaed;
+    --brand-red:#c6002b;
+    --radius-primary:6px;
+    --radius-circular:999px;
+    --body:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  body{
+    background:var(--surface-app);color:var(--on-surface-primary);
+    font-family:var(--body);-webkit-font-smoothing:antialiased;
+    min-height:100vh;overflow-x:hidden;
+  }
+  button{font:inherit;color:inherit;background:none;border:none;cursor:pointer;display:flex}
+  img{display:block}
+  .icon{display:block;width:100%;height:100%}
+  .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+  /* ---------- top header (status bar + nav), sticky ---------- */
+  .top-header{position:sticky;top:0;z-index:40;background:var(--surface-app)}
+  .status-bar{display:flex;height:44px;align-items:center;justify-content:space-between}
+  .status-bar .time{
+    width:134px;text-align:center;font-size:17px;line-height:22px;font-weight:600;
+    color:var(--on-surface-brand-monochrome);
+  }
+  .status-bar .levels{width:134px;display:flex;justify-content:center}
+  .status-bar .levels img{width:78px}
+  .nav{display:flex;height:44px;align-items:center;gap:4px;padding-right:16px}
+  .nav h1{
+    flex:1;min-width:0;font-size:20px;line-height:24px;font-weight:600;
+    color:var(--on-surface-brand-monochrome);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .btn-icon{padding:4px;border-radius:var(--radius-circular)}
+  .btn-icon:hover{background:rgba(0,0,0,.05)}
+  .btn-icon .icon{width:24px;height:24px}
+
+  /* ---------- now playing ---------- */
+  .page{padding:0 16px;display:flex;flex-direction:column;gap:16px;padding-bottom:140px}
+  .now{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px}
+  .art{
+    width:248px;height:248px;border-radius:var(--radius-primary);overflow:hidden;
+    filter:drop-shadow(0 1px 1.5px var(--surface-shadow));background:#fff;
+  }
+  .art img{width:100%;height:100%;object-fit:cover}
+  .meta-row{display:flex;align-items:center;justify-content:space-between;width:100%}
+  .copy{flex:1;min-width:0;position:relative;display:flex;flex-direction:column}
+  .copy .title{
+    font-size:16px;line-height:18px;font-weight:600;color:var(--on-surface-primary);
+    white-space:nowrap;overflow:hidden;
+  }
+  .copy .subtitle{
+    font-size:12px;line-height:16px;letter-spacing:-.35px;color:var(--on-surface-secondary);
+    white-space:nowrap;overflow:hidden;
+  }
+  /* 60px fade so long track/artist strings run out rather than hard-clip */
+  .copy::after{
+    content:"";position:absolute;top:0;bottom:0;right:0;width:60px;pointer-events:none;
+    background:linear-gradient(to right,rgba(246,248,249,0) 45%,var(--surface-app) 95%);
+  }
+  .thumbs{display:flex;align-items:center;justify-content:flex-end;flex-shrink:0}
+  .thumbs button{padding:4px;border-radius:var(--radius-circular)}
+  .thumbs button:hover{background:rgba(0,0,0,.05)}
+  .thumbs button[aria-pressed="true"]{background:rgba(39,41,45,.1)}
+  .thumbs .icon{width:32px;height:32px}
+
+  /* ---------- filter chips ---------- */
+  .chips{
+    display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;
+    margin:8px -16px 0;padding:0 16px;
+  }
+  .chips::-webkit-scrollbar{display:none}
+  .chip{
+    display:flex;align-items:center;justify-content:center;gap:4px;flex-shrink:0;
+    border:1px solid var(--on-surface-primary);border-radius:var(--radius-circular);
+    padding:8px 16px;font-size:14px;line-height:16px;font-weight:600;
+    color:var(--on-surface-primary);white-space:nowrap;
+  }
+  .chip .icon{width:16px;height:16px}
+  .chip[aria-pressed="true"]{background:var(--on-surface-primary);color:#fff}
+  .chip[aria-pressed="true"] .icon{filter:invert(1) brightness(2)}
+
+  /* ---------- station guide (a list in v2, not a grid) ---------- */
+  .guide{display:flex;flex-direction:column;gap:8px}
+  .station{display:flex;gap:8px;align-items:center}
+  .station .logo{
+    width:66px;height:66px;flex-shrink:0;border-radius:var(--radius-primary);
+    background:#fff;box-shadow:0 1px 3px 0 var(--surface-shadow);overflow:hidden;
+  }
+  .station .logo img{width:100%;height:100%;object-fit:cover}
+  .station .row{
+    flex:1;min-width:0;height:66px;min-height:44px;display:flex;align-items:center;gap:8px;
+    background:var(--container-quaternary);border-radius:var(--radius-primary);
+    padding:0 16px;border:2px solid transparent;text-align:left;
+  }
+  .station.is-playing .row{border-color:var(--brand-red)}
+  .station .row .metadata{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;justify-content:center}
+  .station .row .show{
+    font-size:14px;line-height:16px;font-weight:600;color:var(--on-surface-secondary);
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  }
+  .station .row .when{
+    font-size:12px;line-height:16px;letter-spacing:-.35px;color:var(--on-surface-primary);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .station .row .more{padding:4px;border-radius:var(--radius-circular);flex-shrink:0}
+  .station .row .more .icon{width:24px;height:24px}
+  .empty{padding:32px 0;text-align:center;color:var(--on-surface-secondary);font-size:14px}
+
+  /* ---------- media controls ---------- */
+  .controls{position:fixed;left:0;right:0;bottom:24px;z-index:50;padding:0 16px;display:flex;justify-content:center}
+  .pill{
+    width:100%;max-width:343px;height:52px;display:flex;align-items:center;justify-content:center;
+    gap:16px;padding:4px 8px;border-radius:var(--radius-circular);
+    background:var(--surface-app-overlay);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);
+  }
+  .pill button{padding:4px;border-radius:var(--radius-circular);flex-shrink:0}
+  .pill .icon{width:32px;height:32px}
+  /* 72px control inside a 52px pill, exactly as the design overflows it */
+  .pill .primary{
+    background:var(--brand-red);padding:4px;border-radius:var(--radius-circular);
+    filter:drop-shadow(0 1px 1.5px var(--surface-shadow));margin:-10px 0;
+  }
+  .pill .primary .icon{width:64px;height:64px}
+  .pill button:not(.primary):hover{background:rgba(255,255,255,.2)}
+
+  .error{
+    position:fixed;top:96px;left:50%;transform:translateX(-50%);z-index:60;
+    background:var(--brand-red);color:#fff;padding:12px 16px;border-radius:8px;
+    font-size:14px;font-weight:500;box-shadow:0 10px 15px rgba(0,0,0,.2);max-width:calc(100% - 32px);
+  }
+  [hidden]{display:none !important}
+</style>
+</head>
+<body>
+
+<header class="top-header">
+  <div class="status-bar" id="statusBar">
+    <div class="time">9:41</div>
+    <div class="levels"><img class="icon" src="assets/v2/status-levels.svg" alt=""></div>
+  </div>
+  <div class="nav">
+    <button class="btn-icon" aria-label="Back"><img class="icon" src="assets/v2/back.svg" alt=""></button>
+    <h1>Live Radio Dial</h1>
+    <button class="btn-icon" aria-label="Search"><img class="icon" src="assets/v2/search.svg" alt=""></button>
+    <button class="btn-icon" aria-label="AirPlay"><img class="icon" src="assets/v2/airplay-header.svg" alt=""></button>
+  </div>
+</header>
+
+<main class="page">
+  <section class="now">
+    <div class="art"><img id="npArt" src="" alt=""></div>
+    <div class="meta-row">
+      <div class="copy">
+        <div class="title" id="npTitle"></div>
+        <div class="subtitle" id="npSubtitle"></div>
+      </div>
+      <div class="thumbs">
+        <button id="btnDislike" aria-label="Dislike" aria-pressed="false">
+          <img class="icon" src="assets/v2/thumb-down.svg" alt="">
+        </button>
+        <button id="btnLike" aria-label="Like" aria-pressed="false">
+          <img class="icon" src="assets/v2/thumb-up.svg" alt="">
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <nav class="chips" id="chips" aria-label="Filters"></nav>
+
+  <section class="guide" id="guide"></section>
+</main>
+
+<div class="controls">
+  <div class="pill">
+    <button aria-label="Cast"><img class="icon" src="assets/v2/cast.svg" alt=""></button>
+    <button id="btnPrev" aria-label="Previous station"><img class="icon" src="assets/v2/chevron-down.svg" alt=""></button>
+    <button class="primary" id="btnStop" aria-label="Stop"><img class="icon" src="assets/v2/stop.svg" alt=""></button>
+    <button id="btnNext" aria-label="Next station"><img class="icon" src="assets/v2/chevron-up.svg" alt=""></button>
+    <button aria-label="More options"><img class="icon" src="assets/v2/overflow.svg" alt=""></button>
+  </div>
+</div>
+
+<div class="error" id="error" hidden></div>
+
+<script>
+/* ============================================================================
+ * Live Radio Dial v2
+ * Built from Figma: Live-Radio-Dial-v2, node 314:13377
+ *
+ * v2 is a different information architecture from v1, not a restyle. The
+ * two-axis EPG grid is gone: there is no time axis and no horizontal scroll.
+ * Each station is one row showing what is on right now plus its time range,
+ * and the filter icon and bottom sheet are replaced by a scrolling chip row.
+ *
+ * Deliberately vanilla: v1 runs on the Claude Design x-dc runtime, and keeping
+ * v2 independent means neither version can break the other. Both read the same
+ * data/stations.js so the lineup and schedules stay in one place.
+ * ========================================================================== */
+
+const RESEARCH = {
+  // Matches v1 so the two versions are comparable in a study. See v1's
+  // Component.RESEARCH for why the clock is pinned rather than live.
+  pinnedNow: [9, 20],
+  // The Figma frame includes an iOS status bar. Faithful on desktop, but on a
+  // real phone it sits under the device's own status bar and reads as a bug.
+  // Turn this off before fielding on devices.
+  showStatusBar: true,
+};
+
+const state = {
+  stations: [],
+  currentId: null,
+  playing: false,
+  favorites: new Set(),
+  liked: false,
+  disliked: false,
+  filter: { chip: null, genre: null },
+};
+
+const $ = (id) => document.getElementById(id);
+const now = () => {
+  const d = new Date();
+  if (RESEARCH.pinnedNow) d.setHours(RESEARCH.pinnedNow[0], RESEARCH.pinnedNow[1], 0, 0);
+  return d;
+};
+
+/* ---- time formatting: "7:00 - 8:00 AM", "10:00 AM - 2:00 PM" ---- */
+const h12 = (h) => (h % 12) || 12;
+const mer = (h) => (h % 24) < 12 ? 'AM' : 'PM';
+function timeRange(start, end) {
+  return mer(start) === mer(end)
+    ? `${h12(start)}:00 - ${h12(end)}:00 ${mer(end)}`
+    : `${h12(start)}:00 ${mer(start)} - ${h12(end)}:00 ${mer(end)}`;
+}
+const showAt = (station, hour) =>
+  station.shows.find((s) => hour >= s.start && hour < s.end) || station.shows[0];
+
+/* ---- data ---- */
+function buildStations() {
+  return (window.LRD_STATIONS || []).map((s) => {
+    const m = (s.dial || '').match(/(\d+(?:\.\d+)?)/);
+    return { ...s, frequency: m ? parseFloat(m[1]) : 0, isAM: /AM/i.test(s.dial || '') };
+  }).sort((a, b) => (a.isAM - b.isAM) || (a.frequency - b.frequency));
+}
+
+function visibleStations() {
+  let list = state.stations;
+  if (state.filter.chip === 'presets') list = list.filter((s) => state.favorites.has(s.id));
+  if (state.filter.genre) list = list.filter((s) => s.genre === state.filter.genre);
+  return list;
+}
+
+/* ---- audio ---- */
+let audio;
+function setStation(id, play) {
+  const st = state.stations.find((s) => s.id === id);
+  if (!st) return;
+  state.currentId = id;
+  state.liked = state.disliked = false;
+  if (audio && st.stream) {
+    audio.src = st.stream;
+    if (play) { const p = audio.play(); if (p && p.catch) p.catch(() => {}); }
+  }
+  render();
+}
+function step(delta) {
+  const list = visibleStations();
+  if (!list.length) return;
+  const i = list.findIndex((s) => s.id === state.currentId);
+  const next = list[((i < 0 ? 0 : i) + delta + list.length) % list.length];
+  setStation(next.id, true);
+}
+function flashError(msg) {
+  const el = $('error');
+  el.textContent = msg; el.hidden = false;
+  setTimeout(() => { el.hidden = true; }, 4000);
+}
+
+/* ---- render ---- */
+const CHIPS = [
+  { id: 'presets',  label: 'Presets' },
+  { id: 'yours',    label: 'Your Stations' },
+  { id: 'location', label: 'New York, NY', leading: 'assets/v2/chip-location.svg' },
+  { id: 'genre',    label: 'All Genres',   trailing: 'assets/v2/chip-chevron.svg' },
+];
+
+function renderChips() {
+  const host = $('chips');
+  host.innerHTML = '';
+  CHIPS.forEach((c) => {
+    const b = document.createElement('button');
+    b.className = 'chip';
+    const active = c.id === 'genre'
+      ? !!state.filter.genre
+      : state.filter.chip === c.id;
+    b.setAttribute('aria-pressed', String(active));
+    const label = c.id === 'genre' && state.filter.genre ? state.filter.genre : c.label;
+    b.innerHTML =
+      (c.leading ? `<img class="icon" src="${c.leading}" alt="">` : '') +
+      `<span>${label}</span>` +
+      (c.trailing ? `<img class="icon" src="${c.trailing}" alt="">` : '');
+    b.addEventListener('click', () => onChip(c.id));
+    host.appendChild(b);
+  });
+}
+
+function onChip(id) {
+  if (id === 'genre') {
+    // Cycle the genre filter. The Figma shows a chevron implying a picker; a
+    // picker sheet is not in this frame, so cycling stands in for it.
+    const genres = [...new Set(state.stations.map((s) => s.genre))].sort();
+    const i = genres.indexOf(state.filter.genre);
+    state.filter.genre = i + 1 >= genres.length ? null : genres[i + 1];
+  } else if (id === 'location') {
+    // Only one market is in the dataset, so this is the chip pattern without a
+    // second value to switch to.
+    flashError('This prototype covers the New York market only');
+  } else {
+    state.filter.chip = state.filter.chip === id ? null : id;
+  }
+  render();
+}
+
+function renderGuide() {
+  const host = $('guide');
+  const list = visibleStations();
+  host.innerHTML = '';
+  if (!list.length) {
+    host.innerHTML = '<p class="empty">No stations match these filters.</p>';
+    return;
+  }
+  const hour = now().getHours();
+  list.forEach((st) => {
+    const show = showAt(st, hour);
+    const el = document.createElement('div');
+    el.className = 'station' + (st.id === state.currentId ? ' is-playing' : '');
+    el.innerHTML = `
+      <div class="logo"><img src="${st.logo}" alt="${st.name}"></div>
+      <button class="row">
+        <span class="metadata">
+          <span class="show">${show ? show.title : st.name}</span>
+          <span class="when">${show ? timeRange(show.start, show.end) : st.dial}</span>
+        </span>
+        <span class="more" role="button" aria-label="More options for ${st.name}">
+          <img class="icon" src="assets/v2/row-overflow.svg" alt="">
+        </span>
+      </button>`;
+    el.querySelector('.row').addEventListener('click', (e) => {
+      if (e.target.closest('.more')) {
+        e.stopPropagation();
+        toggleFavorite(st.id);
+        return;
+      }
+      setStation(st.id, true);
+    });
+    host.appendChild(el);
+  });
+}
+
+function toggleFavorite(id) {
+  state.favorites.has(id) ? state.favorites.delete(id) : state.favorites.add(id);
+  try { localStorage.setItem('lrdV2Favorites', JSON.stringify([...state.favorites])); } catch (e) {}
+  render();
+}
+
+function renderNowPlaying() {
+  const st = state.stations.find((s) => s.id === state.currentId);
+  if (!st) return;
+  const show = showAt(st, now().getHours());
+  $('npArt').src = st.logo;
+  $('npArt').alt = st.name;
+  // The Figma shows track-level metadata (song title, then artists). The dataset
+  // is schedule-level, so this maps to show title then host and station. Wiring
+  // a real now-playing track feed would fill the same two lines.
+  $('npTitle').textContent = show ? show.title : st.name;
+  $('npSubtitle').textContent = show && show.host ? `${show.host} • ${st.name}` : st.name;
+  $('btnLike').setAttribute('aria-pressed', String(state.liked));
+  $('btnDislike').setAttribute('aria-pressed', String(state.disliked));
+}
+
+function render() {
+  renderNowPlaying();
+  renderChips();
+  renderGuide();
+}
+
+/* ---- boot ---- */
+(function init() {
+  $('statusBar').hidden = !RESEARCH.showStatusBar;
+  state.stations = buildStations();
+  try {
+    const saved = localStorage.getItem('lrdV2Favorites');
+    if (saved) state.favorites = new Set(JSON.parse(saved));
+  } catch (e) {}
+
+  const home = state.stations.find((s) => s.id === window.LRD_HOME_STATION) || state.stations[0];
+  if (home) {
+    state.currentId = home.id;
+    if (!state.favorites.size) state.favorites.add(home.id);
+  }
+
+  audio = new Audio();
+  audio.preload = 'none';
+  audio.addEventListener('playing', () => { state.playing = true; });
+  audio.addEventListener('pause',   () => { state.playing = false; });
+  audio.addEventListener('error',   () => flashError('Unable to play this stream'));
+  if (home && home.stream) audio.src = home.stream;
+
+  $('btnStop').addEventListener('click', () => {
+    if (state.playing) { audio.pause(); }
+    else { const p = audio.play(); if (p && p.catch) p.catch(() => {}); }
+  });
+  $('btnPrev').addEventListener('click', () => step(-1));
+  $('btnNext').addEventListener('click', () => step(1));
+  $('btnLike').addEventListener('click', () => {
+    state.liked = !state.liked; if (state.liked) state.disliked = false; render();
+  });
+  $('btnDislike').addEventListener('click', () => {
+    state.disliked = !state.disliked; if (state.disliked) state.liked = false; render();
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>

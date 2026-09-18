@@ -132,7 +132,15 @@
     position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
     background:rgba(0,0,0,.55);opacity:0;transition:opacity .16s ease-out;
   }
-  .station .logo .glyph{width:34px;height:34px;object-fit:contain}
+  .station .logo .glyph{width:34px;height:34px;object-fit:contain;position:absolute}
+  /* Connecting to a live stream is not instant, so the artwork shows a spinner
+     from the moment you tap until audio actually starts. */
+  .station .logo .glyph.spin{width:30px;height:30px;display:none;animation:lrd-spin .9s linear infinite}
+  .station.is-buffering .logo .glyph.stop{display:none}
+  .station.is-buffering .logo .glyph.spin{display:block}
+  .station.is-buffering .logo .logo-overlay{opacity:1}
+  @keyframes lrd-spin{to{transform:rotate(360deg)}}
+  @media (prefers-reduced-motion: reduce){ .station .logo .glyph.spin{animation-duration:2.4s} }
   /* Shown while this station is the one playing. */
   .station.is-live .logo .logo-overlay{opacity:1}
   /* And on hover, so the control is discoverable with a pointer. */
@@ -428,6 +436,7 @@ const state = {
   liked: false,
   disliked: false,
   track: null,
+  buffering: false,
   library: new Set(),
   rowStation: null,
   filter: { chip: null, genre: null, location: null },
@@ -871,7 +880,10 @@ function renderGuide() {
     el.innerHTML = `
       <button class="logo" aria-label="Play ${st.name}">
         <img src="${st.logo}" alt="${st.name}">
-        <span class="logo-overlay"><img class="glyph" src="assets/v2/stop.svg" alt=""></span>
+        <span class="logo-overlay">
+          <img class="glyph stop" src="assets/v2/stop.svg" alt="">
+          <img class="glyph spin" src="assets/v2/loading.svg" alt="">
+        </span>
       </button>
       <button class="row">
         <span class="metadata">
@@ -908,6 +920,10 @@ function toggleStation(id) {
     audio.currentTime = 0;
     return;
   }
+  // Show the spinner immediately: the browser may take a moment before it
+  // emits 'waiting', and a tap with no feedback reads as a dead control.
+  state.buffering = true;
+  renderPlayState();
   if (id === state.currentId) {
     const p = audio.play();
     if (p && p.catch) p.catch(() => {});
@@ -920,12 +936,16 @@ function toggleStation(id) {
 // disturbing the scroll position.
 function renderPlayState() {
   document.querySelectorAll('.station').forEach((el) => {
-    const live = state.playing && el.dataset.id === state.currentId;
+    const isCurrent = el.dataset.id === state.currentId;
+    const live = state.playing && isCurrent;
+    const busy = state.buffering && isCurrent;
     el.classList.toggle('is-live', live);
+    el.classList.toggle('is-buffering', busy);
     const btn = el.querySelector('.logo');
     if (btn) {
       const name = el.querySelector('.show') ? el.querySelector('.show').textContent : 'station';
-      btn.setAttribute('aria-label', (live ? 'Stop ' : 'Play ') + name);
+      btn.setAttribute('aria-label', (busy ? 'Connecting to ' : live ? 'Stop ' : 'Play ') + name);
+      btn.setAttribute('aria-busy', String(busy));
     }
   });
 }
@@ -1112,9 +1132,13 @@ function render() {
 
   audio = new Audio();
   audio.preload = 'none';
-  audio.addEventListener('playing', () => { state.playing = true;  renderPlayState(); });
-  audio.addEventListener('pause',   () => { state.playing = false; renderPlayState(); });
-  audio.addEventListener('error',   () => flashError('Unable to play this stream'));
+  // 'waiting' fires when the stream stalls mid-play as well as while connecting,
+  // so the spinner covers rebuffering too.
+  audio.addEventListener('playing', () => { state.playing = true;  state.buffering = false; renderPlayState(); });
+  audio.addEventListener('pause',   () => { state.playing = false; state.buffering = false; renderPlayState(); });
+  audio.addEventListener('waiting', () => { state.buffering = true;  renderPlayState(); });
+  audio.addEventListener('stalled', () => { state.buffering = true;  renderPlayState(); });
+  audio.addEventListener('error',   () => { state.buffering = false; renderPlayState(); flashError('Unable to play this stream'); });
   if (home && home.stream) audio.src = home.stream;
 
   $('scrim').addEventListener('click', closeSheet);

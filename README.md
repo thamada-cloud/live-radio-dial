@@ -288,3 +288,13 @@ Tapping a station's artwork in the list starts it, and tapping it again stops it
 Stopping pauses and resets `currentTime`, so resuming rejoins the live stream rather than replaying buffered audio. Tapping the row body (rather than the artwork) still selects and plays, as before.
 
 Play state repaints only the overlay and the button's label rather than rebuilding all 60 rows, so starting or stopping a station cannot disturb the scroll position.
+
+### Buffering
+
+Connecting to a live stream is not instant, so the artwork shows a spinner from the moment you tap until audio actually starts, then swaps to the stop glyph.
+
+The spinner is set on tap rather than waiting for the audio element's `waiting` event: the browser can take a moment to emit it, and a tap with no feedback reads as a dead control. `waiting` and `stalled` also drive it, so a stream that rebuffers mid-play shows the spinner again. `playing`, `pause` and `error` all clear it.
+
+The glyph is the iOS `loading_circle` arc recoloured white for the dark scrim, with its gradient id renamed so it cannot clash with anything else on the page. Under `prefers-reduced-motion` it slows rather than stopping, since a frozen spinner would read as a hang.
+
+Verified through the full cycle: idle → "Connecting to ALT 92.3" with `aria-busy="true"` and the spinner up → "Stop ALT 92.3" with the stop glyph → back to idle.

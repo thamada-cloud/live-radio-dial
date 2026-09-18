@@ -109,6 +109,8 @@
   }
   .station.is-playing .row{border-color:var(--brand-red)}
   .station .row .metadata{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;justify-content:center}
+  /* Line one is the station name, line two its description. The on-air show and
+     time live in the now-playing block above, not on every row. */
   .station .row .show{
     font-size:14px;line-height:16px;font-weight:600;color:var(--on-surface-secondary);
     overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
@@ -625,17 +627,15 @@ function renderGuide() {
     host.innerHTML = '<p class="empty">No stations match these filters.</p>';
     return;
   }
-  const hour = now().getHours();
   list.forEach((st) => {
-    const show = showAt(st, hour);
     const el = document.createElement('div');
     el.className = 'station' + (st.id === state.currentId ? ' is-playing' : '');
     el.innerHTML = `
       <div class="logo"><img src="${st.logo}" alt="${st.name}"></div>
       <button class="row">
         <span class="metadata">
-          <span class="show">${show ? show.title : st.name}</span>
-          <span class="when">${show ? timeRange(show.start, show.end) : (st.description || st.genre)}</span>
+          <span class="show">${st.name}</span>
+          <span class="when">${st.description || st.genre}</span>
         </span>
         <span class="more" role="button" aria-label="More options for ${st.name}">
           <img class="icon" src="assets/v2/row-overflow.svg" alt="">

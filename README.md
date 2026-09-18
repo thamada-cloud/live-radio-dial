@@ -186,7 +186,9 @@ query OnAirSchedule($id: String!, $dayOfWeek: SITES_ONAIR_DAY!, $timeZone: Strin
 
 `id` is the call letters lowercased (`whtz-fm`). Fetched once for all 2,721 stations and baked into `data/onair.js` (179KB, 26KB gzipped) rather than called live: a study needs every participant to see the same thing, and the browser would otherwise make thousands of requests.
 
-933 stations publish a schedule. The other 1,788 return an empty one, and those rows fall back to the station's real name and description, which is what the production web radio-dial shows. **Nothing in the row is synthetic.** The earlier generated schedules are gone, along with `data/schedule.js`.
+933 stations publish a schedule. That drives the **now-playing block**, which shows the show on air and the station beneath it.
+
+**Rows show the station name and its description**, both straight from the API, the same pairing the production web radio-dial uses. Show and time are not repeated per row: they belong to whatever is playing, not to every station in the list. Nothing in a row is synthetic; the earlier generated schedules are gone, along with `data/schedule.js`.
 
 This is also how the Figma frame was made: the "Crystal Rosas" in it is Z100's real 2pm host, straight out of this API.
 

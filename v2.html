@@ -260,16 +260,12 @@
 
 <div class="controls">
   <div class="pill">
-    <button aria-label="Cast"><img class="icon" src="assets/v2/cast.svg" alt=""></button>
-    <!-- Arrows deliberately differ from Figma node 314:13377, which has the down
-         chevron on the left and the up chevron on the right. The guide is a
-         vertical list, so the left button (previous, moving up the list) has to
-         point up and the right button (next, moving down) has to point down.
-         Do not "fix" this back to match the frame. -->
+    <!-- Figma node 314:13377 also has a cast button on the left and an overflow
+         button on the right. Both removed on request, leaving the three
+         transport controls. -->
     <button id="btnPrev" aria-label="Previous station"><img class="icon" src="assets/v2/chevron-up.svg" alt=""></button>
     <button class="primary" id="btnStop" aria-label="Play"><img class="icon" src="assets/v2/play.svg" alt=""></button>
     <button id="btnNext" aria-label="Next station"><img class="icon" src="assets/v2/chevron-down.svg" alt=""></button>
-    <button aria-label="More options"><img class="icon" src="assets/v2/overflow.svg" alt=""></button>
   </div>
 </div>
 

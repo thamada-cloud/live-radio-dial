@@ -145,7 +145,7 @@ Built from Figma: [Live-Radio-Dial-v2, node 314:13377](https://www.figma.com/des
 | Time | 14 columns, ~11 screen-widths of horizontal scroll | A time range on each row, no horizontal scroll |
 | Filtering | Icon opening a bottom sheet | Scrolling chip row, always visible |
 | Now playing | 300x250 slot (ad-shaped) | 248x248 square |
-| Transport | Talkback, prev, play, next, more | Cast, prev, **stop**, next, more |
+| Transport | Talkback, prev, play, next, more | prev, **play/stop**, next |
 | Thumbs | Playlist, like, dislike | Dislike, like (no playlist) |
 
 **The time axis is gone.** Each row shows the show that is on now plus its time range; there is no way to look at what is on later. Since the research plan's hypothesis is about a guide that shows what is coming up, and its time-axis task asks for a show ten hours out, v2 does not answer the same question v1 does. That is worth settling before either goes into a study.
@@ -208,9 +208,11 @@ Picking a city switches the whole lineup. `DETECTED_MARKET` stands in for CoreLo
 
 The zip flow uses `prompt()`, which is the closest web equivalent to iOS's `IHRTextFieldAlert`. It validates five digits and rejects a code with no stations, matching how iOS gates Save on `ZipCodeValidator` and only commits inside the success branch. Worth replacing with an in-sheet field before fielding, since `prompt()` is blocked in some embedded contexts.
 
-### Deliberate deviation from the frame
+### Deliberate deviations from the frame
 
-The transport arrows are swapped relative to Figma node 314:13377, which puts the down chevron on the left and the up chevron on the right. The guide is a vertical list, so the left button (previous, moving up the list) points up and the right button (next, moving down) points down. Noted in the source so it does not get "fixed" back.
+**Transport arrows are swapped** relative to Figma node 314:13377, which puts the down chevron on the left and the up chevron on the right. The guide is a vertical list, so the left button (previous, moving up the list) points up and the right button (next, moving down) points down. Noted in the source so it does not get "fixed" back.
+
+**Cast and overflow removed** from the control pill, leaving the three transport controls. The pill still spans the full 343px from the frame, so the three controls sit centred with space either side; narrowing it to hug its contents is a one-line change if that reads better.
 
 ### Where the design and the data do not line up
 

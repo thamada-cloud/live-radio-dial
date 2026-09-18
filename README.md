@@ -279,9 +279,7 @@ Implemented as a plain scroll listener with no `requestAnimationFrame` throttle.
 
 ### Bottom-of-list fade
 
-A gradient above the tab bar tells you the list continues, but only when that is genuinely unclear. If a decent slice of the next row is already peeking above the tab bar, the peek says "more below" perfectly well and the fade would just be haze over content, so it stays off. It appears when a row boundary happens to land near the fold, which is the case that makes a list with 50 more stations look finished.
-
-The threshold is 18px of visible partial row. Measured walking down the list: peeks of 53, 33, 24 and 39px leave it off, a 3px peek turns it on, and it goes off again at the true bottom.
+A gradient above the tab bar is present the whole way down the list and goes only when you actually reach the end. An earlier version suppressed it whenever a partial row was already peeking, on the theory that the peek said "more" by itself; in practice it appeared and vanished as you scrolled, which reads worse than simply always having it.
 
 ### Artwork as the play control
 

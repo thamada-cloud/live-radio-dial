@@ -47,7 +47,7 @@
      station rows scroll under them. */
   .top-sticky{
     position:sticky;top:0;z-index:30;
-    display:flex;flex-direction:column;gap:16px;
+    display:flex;flex-direction:column;gap:0;
     background:var(--surface-app);
     padding:calc(16px + env(safe-area-inset-top)) 0 16px;
   }
@@ -89,7 +89,7 @@
   .chips-wrap{
     display:grid;
     grid-template-rows:1fr;
-    margin-top:8px;
+    margin-top:16px;
     transition:grid-template-rows .34s cubic-bezier(.32,.72,0,1),
                margin-top .34s cubic-bezier(.32,.72,0,1),
                opacity .2s ease-out;
@@ -132,7 +132,7 @@
     position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
     background:rgba(0,0,0,.55);opacity:0;transition:opacity .16s ease-out;
   }
-  .station .logo .glyph{width:26px;height:26px;object-fit:contain}
+  .station .logo .glyph{width:34px;height:34px;object-fit:contain}
   /* Shown while this station is the one playing. */
   .station.is-live .logo .logo-overlay{opacity:1}
   /* And on hover, so the control is discoverable with a pointer. */
@@ -994,23 +994,14 @@ function remainingIn(show, h) {
  * it appears when a row boundary happens to land near the fold, which makes a
  * list with 50 more stations look finished.
  */
-const PEEK_ENOUGH = 18;      // px of a partial row that reads as "more below"
-
 function updateListFade() {
   const fade = $('listFade');
-  const tabbar = $('tabbar');
+  // Shown whenever the list continues, full stop. It was previously suppressed
+  // when a partial row was already peeking, on the theory that the peek said
+  // "more" by itself. In practice that made it appear and vanish as you
+  // scrolled, which is harder to read than simply always having it.
   const remaining = document.documentElement.scrollHeight - window.innerHeight - window.scrollY;
-
-  if (remaining <= 4) { fade.classList.remove('is-on'); return; }   // actually at the end
-
-  // Where the content is cut off: the top edge of the tab bar.
-  const cut = tabbar.getBoundingClientRect().top;
-  let peek = 0;
-  for (const row of document.querySelectorAll('.station')) {
-    const b = row.getBoundingClientRect();
-    if (b.top < cut && b.bottom > cut) { peek = cut - b.top; break; }
-  }
-  fade.classList.toggle('is-on', peek < PEEK_ENOUGH);
+  fade.classList.toggle('is-on', remaining > 4);
 }
 
 /* ---- stow the filter chips while scrolling down ----

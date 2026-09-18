@@ -126,8 +126,10 @@
 
   /* ---------- media controls ---------- */
   .controls{position:fixed;left:0;right:0;bottom:24px;z-index:50;padding:0 16px;display:flex;justify-content:center}
+  /* Hugs its contents rather than spanning the frame's full 343px. That width
+     was sized for five controls; with three it left large empty margins. */
   .pill{
-    width:100%;max-width:343px;height:52px;display:flex;align-items:center;justify-content:center;
+    width:auto;max-width:100%;height:52px;display:flex;align-items:center;justify-content:center;
     gap:16px;padding:4px 8px;border-radius:var(--radius-circular);
     background:var(--surface-app-overlay);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);
   }

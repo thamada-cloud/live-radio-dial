@@ -212,7 +212,7 @@ The zip flow uses `prompt()`, which is the closest web equivalent to iOS's `IHRT
 
 **Transport arrows are swapped** relative to Figma node 314:13377, which puts the down chevron on the left and the up chevron on the right. The guide is a vertical list, so the left button (previous, moving up the list) points up and the right button (next, moving down) points down. Noted in the source so it does not get "fixed" back.
 
-**Cast and overflow removed** from the control pill, leaving the three transport controls. The pill still spans the full 343px from the frame, so the three controls sit centred with space either side; narrowing it to hug its contents is a one-line change if that reads better.
+**Cast and overflow removed** from the control pill, leaving the three transport controls. The pill now sizes to its contents (200px rather than the frame's 343px), since that width was drawn for five controls and left large empty margins with three.
 
 ### Where the design and the data do not line up
 

@@ -58,6 +58,8 @@
      art sat flush against the top edge, so keep a little room, plus the safe
      area on a notched device. */
   .page{padding:0 16px 96px}
+  /* Radio hides the mini player, so its list only has to clear the tab bar. */
+  #viewRadio{padding-bottom:calc(57px + env(safe-area-inset-bottom))}
   /* Artwork, metadata, thumbs and the filter chips hold position; only the
      station rows scroll under them. */
   .top-sticky{
@@ -1398,7 +1400,9 @@ function toggleStation(id) {
 function renderMini() {
   const st = state.stations.find((s) => s.id === state.currentId);
   const mini = $('miniPlayer');
-  if (!st) { mini.hidden = true; return; }
+  // Radio already shows artwork, metadata and transport in its sticky hero, so
+  // the mini there would just be a second copy of the same controls.
+  if (!st || state.view === 'radio') { mini.hidden = true; return; }
   mini.hidden = false;
   const show = showAt(st, nowHours());
   const t = state.track;
@@ -1569,6 +1573,7 @@ function switchView(id) {
   $('chipsWrap').classList.remove('is-stowed');
   window.scrollTo(0, 0);
   renderTabBar();
+  renderMini();
   if (id === 'home')      renderHome();
   if (id === 'search')    renderSearch();
   if (id === 'podcasts')  renderPodcasts();

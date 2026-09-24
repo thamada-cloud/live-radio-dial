@@ -1561,6 +1561,9 @@ const VIEW_IDS = { home: 'viewHome', search: 'viewSearch', radio: 'viewRadio',
 
 function switchView(id) {
   state.view = id;
+  // Radio runs its own sticky hero from the very top of the screen, so the app
+  // header would push the artwork down and steal a second row of chrome.
+  $('appHeader').hidden = (id === 'radio');
   // Search shows a plain title where the other tabs show the brand.
   $('appHeader').querySelector('.brand').hidden = (id === 'search');
   $('headerTitle').hidden = (id !== 'search');
@@ -2113,8 +2116,9 @@ function render() {
     state.disliked = !state.disliked; if (state.disliked) state.liked = false; render();
   });
 
-  state.view = LANDING_TAB;
-  renderTabBar();
+  // Go through switchView so the landing tab gets the same chrome rules as a
+  // tap on the tab bar would give it.
+  switchView(LANDING_TAB);
   watchTrack();
   watchScroll();
   render();

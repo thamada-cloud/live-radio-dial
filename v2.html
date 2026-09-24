@@ -553,7 +553,8 @@
     overflow:hidden;
   }
   .rank-thumb{width:var(--img-list-small);height:var(--img-list-small);flex-shrink:0;
-    background:linear-gradient(160deg,#c3c8cc,#9aa1a6)}
+    background:linear-gradient(160deg,#c3c8cc,#9aa1a6);overflow:hidden}
+  .rank-thumb img{width:100%;height:100%;object-fit:cover}
   .rank-title{font-size:12px;line-height:16px;letter-spacing:-.35px;
     color:var(--on-surface-primary);padding-right:var(--pad-md2);
     display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
@@ -565,18 +566,25 @@
   .rank-rail{display:flex;gap:var(--pad-md2);overflow-x:auto;scrollbar-width:none;
     margin:0 calc(-1 * var(--pad-lg));padding:0 var(--pad-lg)}
   .rank-rail::-webkit-scrollbar{display:none}
-  .rank-card{width:var(--card-3);flex-shrink:0;text-align:left}
-  .rank-card .top{display:block;position:relative;width:100%;aspect-ratio:1/1}
-  .rank-card .n{position:absolute;left:-6px;bottom:-6px;z-index:2;
-    font-size:34px;line-height:36px;font-weight:800;color:transparent;
-    -webkit-text-stroke:1.5px var(--brand-red)}
-  .rank-card .ph{display:block;width:100%;height:100%;border-radius:var(--radius-primary);
-    background:linear-gradient(160deg,#c3c8cc,#9aa1a6)}
+  /* ContentCardTopRanker.swift is an HStack: the numeral sits in its own column
+     to the LEFT of a 92pt square card, tucked 2pt under the artwork's left edge
+     and drawn behind it, with its top padded to cardWidth - height - 10. */
+  .rank-card{display:flex;align-items:flex-start;flex-shrink:0;text-align:left}
+  .rank-card .n{
+    flex-shrink:0;position:relative;z-index:0;
+    margin-top:calc(92px - 40px - 10px);margin-right:-2px;
+    font-size:40px;line-height:40px;font-weight:800;color:transparent;
+    -webkit-text-stroke:1.5px var(--brand-red);
+  }
+  .rank-card .top{display:block;position:relative;z-index:1;width:92px;flex-shrink:0}
+  .rank-card .ph{display:block;width:92px;height:92px;border-radius:var(--radius-primary);
+    background:linear-gradient(160deg,#c3c8cc,#9aa1a6);overflow:hidden}
+  .rank-card .ph img{width:100%;height:100%;object-fit:cover;display:block}
   .rank-card .ph.circle{border-radius:999px}
-  .rank-card .cap{margin-top:var(--pad-md1);font-size:12px;line-height:16px;letter-spacing:-.35px;
+  .rank-card .top .cap{margin-top:var(--pad-md1);font-size:12px;line-height:16px;letter-spacing:-.35px;
     color:var(--on-surface-primary);
     display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-  .rank-card .cap2{display:block;font-size:12px;line-height:16px;letter-spacing:-.35px;
+  .rank-card .top .cap2{display:block;font-size:12px;line-height:16px;letter-spacing:-.35px;
     color:var(--on-surface-secondary)}
 
   .error{
@@ -902,6 +910,9 @@ const state = {
   citySearch: '',
   locationMethod: 'current',
   zip: '',
+  // The four ranked Home sections, filled once from the live endpoints.
+  home: { trending: null, podcasts: null, playlists: null, artists: null,
+          loading: false, loaded: false },
 };
 
 const $ = (id) => document.getElementById(id);
@@ -1632,6 +1643,16 @@ function headChip(label, opts) {
          '</button>';
 }
 
+function esc(t) {
+  return String(t).replace(/[&<>"]/g, (c) =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+}
+
+/* Artwork for a ranked item, or nothing so the grey plate shows through. */
+function art(item) {
+  return item && item.art ? `<img src="${esc(item.art)}" alt="" loading="lazy">` : '';
+}
+
 function secHead(host, title, trailing, leadIcon) {
   const h = document.createElement('div');
   h.className = 'sec-head';
@@ -1733,12 +1754,14 @@ function renderHome() {
   secHead(tr, 'Trending on iHeart');
   const tlist = document.createElement('div');
   tlist.className = 'rank-list';
+  const trending = state.home.trending;
   for (let i = 1; i <= 3; i++) {
+    const item = trending && trending[i - 1];
     const r = document.createElement('div');
     r.className = 'rank-row';
     r.innerHTML = `<span class="rank-num">${i}</span>` +
-                  '<span class="rank-card-row"><span class="rank-thumb"></span>' +
-                  '<span class="rank-title">Title copy that can continue onto 2 lines</span></span>';
+      `<span class="rank-card-row"><span class="rank-thumb">${art(item)}</span>` +
+      `<span class="rank-title">${item ? esc(item.title) : 'Title copy that can continue onto 2 lines'}</span></span>`;
     tlist.appendChild(r);
   }
   tr.appendChild(tlist);
@@ -1747,28 +1770,150 @@ function renderHome() {
   tr.appendChild(sa);
 
   // --- The three ranked rails with no data behind them ---
-  const ranked = (host, title, chip, circle, cap2) => {
+  const ranked = (host, title, chip, circle, cap2, items) => {
     host.innerHTML = '';
     secHead(host, title, headChip(chip));
     const rail = document.createElement('div');
     rail.className = 'rank-rail';
-    for (let i = 1; i <= 5; i++) {
+    const n = items && items.length ? Math.min(items.length, 10) : 5;
+    for (let i = 1; i <= n; i++) {
+      const item = items && items[i - 1];
       const c = document.createElement('div');
       c.className = 'rank-card';
-      c.innerHTML = `<span class="top"><span class="n">${i}</span><span class="ph${circle ? ' circle' : ''}"></span></span>` +
-                    `<span class="cap">Title Copy That Keeps...</span>` +
-                    (cap2 ? `<span class="cap2">${cap2}</span>` : '');
+      c.innerHTML =
+        `<span class="n">${i}</span><span class="top">` +
+        `<span class="ph${circle ? ' circle' : ''}">${art(item)}</span>` +
+        `<span class="cap">${item ? esc(item.title) : 'Title Copy That Keeps...'}</span>` +
+        (cap2 ? `<span class="cap2">${cap2}</span>` : '') + '</span>';
       rail.appendChild(c);
     }
     host.appendChild(rail);
   };
-  ranked($('secTopPodcasts'), 'Top Podcasts', 'All Categories', false);
-  ranked($('secTopPlaylists'), 'Top Playlists', 'All Genres', false);
-  ranked($('secTopArtists'), 'Top Artist Radio', 'All Genres', true, '& similar artists');
+  ranked($('secTopPodcasts'), 'Top Podcasts', 'All Categories', false, null, state.home.podcasts);
+  ranked($('secTopPlaylists'), 'Top Playlists', 'All Genres', false, null, state.home.playlists);
+  ranked($('secTopArtists'), 'Top Artist Radio', 'All Genres', true, '& similar artists', state.home.artists);
+
+  loadHomeData();
+}
+
+/* Fetches the four ranked sections once, then repaints Home. Each one fails on
+ * its own: a section whose endpoint is down keeps its grey placeholder rather
+ * than taking the rest of the page with it. */
+function loadHomeData() {
+  if (state.home.loading || state.home.loaded) return;
+  state.home.loading = true;
+  const jobs = [
+    ['trending', fetchTrending],
+    ['podcasts', fetchTopPodcasts],
+    ['playlists', fetchTopPlaylists],
+    ['artists', fetchTopArtists],
+  ];
+  Promise.all(jobs.map(([key, fn]) =>
+    fn().then((v) => { state.home[key] = v; }).catch(() => {})
+  )).then(() => {
+    state.home.loading = false;
+    state.home.loaded = true;
+    if (state.view === 'home') renderHome();
+  });
 }
 
 /* Search mirrors iHeart/Search: a bar, then recent searches and a Browse All
  * directory while idle, and results once you type. */
+
+/* ---------- Home data, from the same endpoints iheart.com's home route uses ----------
+ * Read off apps/listen/app/routes/_app/_index/.server/loader.ts in the web
+ * monorepo, which prefetches exactly these four. Every one of them answers
+ * unauthenticated, so the prototype can call them straight from the browser.
+ *
+ *   Trending on iHeart  webapi GraphQL `Trending`, pubsub type content:trending
+ *   Top Podcasts        webapi GraphQL `Leads`, collections/popular-podcasts
+ *   Top Playlists       webapi GraphQL `PlaylistsDirectoriesItems`,
+ *                       collections/playlist-directory + facets/featured-playlists
+ *   Top Artist Radio    AMP /api/v2/recs/genre, template CR, the web app's
+ *                       DEFAULT_ARTIST_GENRE of 102
+ *
+ * Artist art comes back as an http:// image.iheart.com path, which a page served
+ * over https will not load, so artists and podcasts both go through the
+ * i.iheart.com catalog route by id instead. */
+const WEBAPI = 'https://webapi.radioedit.iheart.com/graphql';
+const AMP = 'https://us.api.iheart.com';
+const HOME_COUNTRY = 'US';
+const HOME_LOCALE = 'en-US';
+const DEFAULT_ARTIST_GENRE = 102;   // rankers-top-artists.ts
+
+async function gql(query, variables) {
+  const r = await fetch(WEBAPI, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ query, variables }),
+  });
+  if (!r.ok) throw new Error(`webapi ${r.status}`);
+  const j = await r.json();
+  if (j.errors && j.errors.length) throw new Error(j.errors[0].message);
+  return j.data;
+}
+
+const Q_TRENDING = `query Trending($mode: PubsubQueryMode, $subscription: [PubsubDistributionInput!]!) {
+  pubsub { query(type: "content:trending", query: {limit: 1, mode: $mode, subscription: $subscription}) {
+    items { content { __typename ... on PubsubContentTrendingPayloadSelection {
+      data { trending { image { public_uri } title link mobile_link } } } } } } } }`;
+
+const Q_LEADS = `fragment commonCardFields on Card {
+  catalog { id } id img_uri link { urls { web device } } subtitle title }
+  query Leads($query: QueryInput!, $locale: String) { leads(query: $query, locale: $locale) { ...commonCardFields } }`;
+
+const Q_PLAYLISTS = `query PlaylistsDirectoriesItems($tags: [String!]!, $countries: [String!]!) {
+  playlists { directories { list(args: {countries: $countries, tags: $tags, tagMatchType: EXACT, take: 10}) {
+    items { id metadata { title subtitle imageUrl locales }
+      children { id resource { ... on PlaylistsPlaylistRecord {
+        title description urlImage publishedUserId publishedPlaylistId } } } } } } } }`;
+
+async function fetchTrending() {
+  const d = await gql(Q_TRENDING, {
+    mode: 'MATCH_ANY',
+    subscription: [{ tags: [`countries/${HOME_COUNTRY}`] }],
+  });
+  const items = d?.pubsub?.query?.items ?? [];
+  const list = items[0]?.content?.data?.trending ?? [];
+  return list.map((t) => ({ title: t.title, art: t.image?.public_uri || '' }));
+}
+
+async function fetchTopPodcasts() {
+  const d = await gql(Q_LEADS, {
+    locale: HOME_LOCALE,
+    query: { subscription: [{ tags: ['collections/popular-podcasts', `countries/${HOME_COUNTRY}`] }] },
+  });
+  return (d?.leads ?? []).filter((l) => l.catalog?.id).map((l) => ({
+    title: l.title || '',
+    sub: l.subtitle || '',
+    art: `https://i.iheart.com/v3/catalog/show/${l.catalog.id}`,
+  }));
+}
+
+async function fetchTopPlaylists() {
+  const d = await gql(Q_PLAYLISTS, {
+    countries: [`countries/${HOME_COUNTRY}`],
+    tags: ['collections/playlist-directory', 'facets/featured-playlists'],
+  });
+  const items = d?.playlists?.directories?.list?.items ?? [];
+  const out = [];
+  items.forEach((it) => (it.children ?? []).forEach((c) => {
+    const r = c.resource;
+    if (r && r.title) out.push({ title: r.title, sub: r.description || '', art: r.urlImage || '' });
+  }));
+  return out;
+}
+
+async function fetchTopArtists() {
+  const r = await fetch(`${AMP}/api/v2/recs/genre?genreId=${DEFAULT_ARTIST_GENRE}&limit=10&template=CR`);
+  if (!r.ok) throw new Error(`amp ${r.status}`);
+  const j = await r.json();
+  return (j.values ?? []).map((v) => ({
+    title: v.label || v.content?.name || '',
+    art: `https://i.iheart.com/v3/catalog/artist/${v.contentId}`,
+  }));
+}
+
 /* Shared builders for the placeholder sections. The Figma frames for Podcasts
  * and Playlists show real podcast artwork and artist photography, which this
  * prototype has no right to reproduce, so every artwork slot renders as the

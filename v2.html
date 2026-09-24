@@ -22,6 +22,7 @@
     --tab-unselected:#3f4447;           /* grey500    */
     --hairline:#e6eaed;                 /* grey200    */
     --brand-red:#c6002b;
+    --on-surface-informative:#0055b7; /* blue600, used for chips and Show All */
     --radius-primary:6px;      /* corner_radius_rounded_primary */
     --radius-tertiary:16px;    /* corner_radius_rounded_tertiary */
     /* Padding scale */
@@ -31,7 +32,11 @@
        shows 3 on a phone, so a 375pt screen gives 91pt cards, not the 112 I
        had guessed. */
     --peek:48px;
-    --card-3:calc((100vw - 48px - 16px - 36px) / 3);
+    /* image sizes straight out of the Figma variable set */
+    --img-carousel-xxsmall:40px; --img-carousel-xsmall:56px;
+    --img-carousel-small:66px;  --img-carousel-default:92px;
+    --img-list-small:56px;
+    --card-3:calc((100vw - 48px - 16px - 16px) / 3);
     --card-2:calc((100vw - 48px - 16px - 24px) / 2);
     --radius-circular:999px;
     --body:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
@@ -424,6 +429,154 @@
     border-bottom:1px solid var(--hairline);
   }
 
+  /* ---------- app chrome, shared by every tab ----------
+     Header, mini player and the 320x50 ad slot appear on every screen in the
+     Figma frames. None of it existed before. */
+  .app-header{
+    position:sticky;top:0;z-index:35;background:var(--surface-app);
+    display:flex;align-items:center;gap:var(--pad-lg);
+    height:44px;padding:0 var(--pad-lg);
+  }
+  .app-header .brand{display:flex;align-items:center;gap:6px;margin-right:auto}
+  .app-header .brand img{width:26px;height:26px}
+  .app-header .brand span{font-size:20px;line-height:24px;font-weight:700;letter-spacing:-.4px}
+  .app-header .h-btn{padding:2px;border-radius:999px;position:relative}
+  .app-header .h-btn img{width:22px;height:22px;object-fit:contain}
+  .app-header .badge{
+    position:absolute;top:-2px;right:-4px;min-width:15px;height:15px;padding:0 4px;
+    border-radius:999px;background:var(--brand-red);color:#fff;
+    font-size:10px;line-height:15px;font-weight:700;text-align:center;
+  }
+  /* Search swaps the brand for a plain title. */
+  .app-header .title{font-size:24px;line-height:30px;font-weight:700;letter-spacing:-.4px;margin-right:auto}
+
+  .ad-slot{
+    width:320px;height:50px;margin:var(--pad-lg) auto;border-radius:2px;
+    background:#c9ced2;display:flex;align-items:center;justify-content:center;
+    color:#6b7280;font-size:12px;font-weight:600;
+  }
+
+  /* Mini player, pinned above the tab bar. */
+  .mini{
+    position:fixed;left:0;right:0;z-index:45;
+    bottom:calc(49px + env(safe-area-inset-bottom));
+    display:flex;align-items:center;gap:var(--pad-md2);
+    padding:var(--pad-md1) var(--pad-lg);
+    background:var(--surface-app);border-top:2px solid var(--brand-red);
+  }
+  .mini .art{width:44px;height:44px;border-radius:var(--radius-primary);overflow:hidden;background:#fff;flex-shrink:0;filter:none}
+  .mini .art img{width:100%;height:100%;object-fit:cover}
+  .mini .lines{flex:1;min-width:0;display:flex;flex-direction:column}
+  .mini .lines span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mini .l1,.mini .l3{font-size:12px;line-height:16px;color:var(--on-surface-secondary)}
+  .mini .l2{font-size:14px;line-height:18px;font-weight:600;letter-spacing:-.5px;color:var(--on-surface-primary)}
+  .mini .m-btn{padding:4px;flex-shrink:0}
+  .mini .m-btn img{width:24px;height:24px}
+  .mini .m-play{width:40px;height:40px;border-radius:999px;background:#0f1114;
+    display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .mini .m-play img{width:22px;height:22px}
+
+  /* Section header with an optional trailing control. */
+  .sec-head{display:flex;align-items:center;gap:var(--pad-md1);margin-bottom:var(--pad-md2)}
+  .sec-head h2{font-size:20px;line-height:24px;font-weight:600;letter-spacing:-.2px;
+    color:var(--on-surface-primary);margin:0}
+  .sec-head .lead{width:20px;height:20px;flex-shrink:0}
+  .sec-head .spacer{margin-left:auto}
+  .sec-head .link{font-size:14px;font-weight:600;color:var(--brand-red)}
+  .sec-head .mini-chip{
+    display:flex;align-items:center;gap:4px;max-width:124px;height:28px;padding:0 10px;
+    border-radius:999px;background:var(--container-primary-inverse);border:none;
+    box-shadow:0 1px 3px 0 var(--surface-shadow);
+    font-size:12px;line-height:16px;font-weight:600;letter-spacing:-.35px;
+    color:var(--on-surface-informative);white-space:nowrap;
+  }
+  .sec-head .mini-chip .ct{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .sec-head .mini-chip .cv{flex-shrink:0;width:10px;height:10px}
+  .sec-head .icon-btn img{width:20px;height:20px;opacity:.8}
+
+  .sec{margin-bottom:var(--pad-lg)}
+
+  /* Presets, a row of small tiles with empty add slots. */
+  .preset-row{display:flex;gap:var(--pad-md1);overflow-x:auto;scrollbar-width:none;
+    margin:0 calc(-1 * var(--pad-lg));padding:0 var(--pad-lg)}
+  .preset-row::-webkit-scrollbar{display:none}
+  .preset{width:var(--img-carousel-small);height:var(--img-carousel-small);flex-shrink:0;border-radius:var(--radius-primary);
+    overflow:hidden;background:#fff;box-shadow:0 1px 3px 0 var(--surface-shadow);border:none;padding:0}
+  .preset img{width:100%;height:100%;object-fit:cover;display:block}
+  .preset.empty{background:var(--container-quaternary);box-shadow:none;
+    display:flex;align-items:center;justify-content:center;color:var(--on-surface-secondary);font-size:24px;font-weight:300}
+
+  /* Live Radio Dial cards: logo, title, description, play. */
+  .dial-card{
+    width:calc((100vw - var(--peek) - 16px - var(--pad-md1)) / 2);
+    height:80px;flex-shrink:0;text-align:left;position:relative;
+    background:var(--container-primary-inverse);border:none;
+    border-radius:var(--radius-primary);padding:var(--pad-md1);
+    box-shadow:0 1px 3px 0 var(--surface-shadow);
+    display:flex;flex-direction:column;gap:var(--pad-sm1);overflow:hidden;
+  }
+  .dial-card .t{font-size:14px;line-height:16px;font-weight:600;letter-spacing:-.5px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%}
+  .dial-card .d{font-size:12px;line-height:16px;letter-spacing:-.35px;
+    color:var(--on-surface-secondary);padding-right:32px;
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .dial-card .play{position:absolute;right:var(--pad-md1);bottom:var(--pad-md1);
+    width:28px;height:28px}
+
+  .scan-btn{
+    display:flex;align-items:center;justify-content:center;gap:var(--pad-sm2,6px);width:100%;
+    height:32px;margin-top:var(--pad-md2);padding:0 var(--pad-md2);
+    background:var(--container-primary-inverse);border:none;border-radius:999px;
+    box-shadow:0 1px 3px 0 var(--surface-shadow);
+    color:var(--brand-red);font-size:14px;line-height:16px;font-weight:600;letter-spacing:-.5px;
+  }
+  .scan-btn img{width:16px;height:16px}
+
+  /* Your Library pills. */
+  .lib-pills{display:flex;gap:var(--pad-md1);flex-wrap:wrap}
+  .lib-pill{padding:8px 18px;border-radius:999px;border:1px solid var(--on-surface-primary);
+    background:none;font-size:14px;font-weight:600;color:var(--on-surface-primary)}
+
+  /* Numbered ranking rows and cards. */
+  .rank-list{display:flex;flex-direction:column;gap:var(--pad-md1)}
+  .rank-row{display:flex;align-items:center;gap:var(--pad-md1);width:100%;text-align:left}
+  .rank-num{
+    font-size:34px;line-height:38px;font-weight:800;width:30px;flex-shrink:0;text-align:center;
+    color:transparent;-webkit-text-stroke:1.5px var(--brand-red);
+  }
+  .rank-card-row{
+    flex:1;min-width:0;height:var(--img-list-small);display:flex;align-items:center;
+    gap:var(--pad-md2);background:var(--container-primary-inverse);
+    border-radius:var(--radius-primary);box-shadow:0 1px 3px 0 var(--surface-shadow);
+    overflow:hidden;
+  }
+  .rank-thumb{width:var(--img-list-small);height:var(--img-list-small);flex-shrink:0;
+    background:linear-gradient(160deg,#c3c8cc,#9aa1a6)}
+  .rank-title{font-size:12px;line-height:16px;letter-spacing:-.35px;
+    color:var(--on-surface-primary);padding-right:var(--pad-md2);
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .show-all{display:flex;align-items:center;justify-content:center;width:100%;height:40px;
+    margin-top:var(--pad-lg);background:var(--container-primary-inverse);border:none;
+    border-radius:999px;box-shadow:0 1px 3px 0 var(--surface-shadow);
+    color:var(--on-surface-informative);font-size:16px;line-height:20px;font-weight:600}
+
+  .rank-rail{display:flex;gap:var(--pad-md2);overflow-x:auto;scrollbar-width:none;
+    margin:0 calc(-1 * var(--pad-lg));padding:0 var(--pad-lg)}
+  .rank-rail::-webkit-scrollbar{display:none}
+  .rank-card{width:var(--card-3);flex-shrink:0;text-align:left}
+  .rank-card .top{display:block;position:relative;width:100%;aspect-ratio:1/1}
+  .rank-card .n{position:absolute;left:-6px;bottom:-6px;z-index:2;
+    font-size:34px;line-height:36px;font-weight:800;color:transparent;
+    -webkit-text-stroke:1.5px var(--brand-red)}
+  .rank-card .ph{display:block;width:100%;height:100%;border-radius:var(--radius-primary);
+    background:linear-gradient(160deg,#c3c8cc,#9aa1a6)}
+  .rank-card .ph.circle{border-radius:999px}
+  .rank-card .cap{margin-top:var(--pad-md1);font-size:12px;line-height:16px;letter-spacing:-.35px;
+    color:var(--on-surface-primary);
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .rank-card .cap2{display:block;font-size:12px;line-height:16px;letter-spacing:-.35px;
+    color:var(--on-surface-secondary)}
+
   .error{
     position:fixed;top:96px;left:50%;transform:translateX(-50%);z-index:60;
     background:var(--brand-red);color:#fff;padding:12px 16px;border-radius:8px;
@@ -497,10 +650,97 @@
   .sheet .action-row .icon{width:24px;height:24px;flex-shrink:0;color:var(--on-surface-primary)}
   .sheet .action-row .name{font-size:16px;line-height:22px;font-weight:500;color:var(--on-surface-primary)}
   .sheet .note{padding:0 24px 16px;font-size:13px;line-height:18px;color:#6b7280}
+
+  /* ---------- shared card shapes used by Search, Podcasts and Playlists ----------
+     Sizes come straight out of the Figma frames: the wide card is 165x94 in a
+     343 column, the square carousel card is image/carousel/1:1_default (92),
+     and the grids are two columns of wide cards with 12pt gutters. */
+  .rail-x{display:flex;gap:var(--pad-md2);overflow-x:auto;overflow-y:hidden;scrollbar-width:none;
+    margin:0 calc(-1 * var(--pad-lg));padding:0 var(--pad-lg) var(--pad-sm1)}
+  .rail-x::-webkit-scrollbar{display:none}
+
+  .wide-card{
+    width:calc((100vw - 32px - 12px) / 2);height:94px;flex-shrink:0;border:none;padding:0;
+    border-radius:var(--radius-primary);overflow:hidden;position:relative;
+    box-shadow:0 1px 3px 0 var(--surface-shadow);
+    background:linear-gradient(160deg,#c3c8cc,#8f979d);
+  }
+  .grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--pad-md2)}
+  .grid2 .wide-card{width:100%}
+
+  /* Category tile: gradient plate with the label sitting bottom left. */
+  .cat-tile{
+    display:flex;align-items:flex-end;padding:var(--pad-md2);
+    color:#fff;font-size:14px;line-height:16px;font-weight:600;letter-spacing:-.5px;
+    text-align:left;text-shadow:0 1px 2px rgba(0,0,0,.35);
+  }
+
+  /* Square carousel card: 92pt artwork, then up to two lines of title. */
+  .sq-card{display:block;width:var(--card-3);flex-shrink:0;text-align:left;background:none;border:none;padding:0}
+  .sq-card .ph{display:block;width:100%;aspect-ratio:1/1;border-radius:var(--radius-primary);
+    background:linear-gradient(160deg,#c3c8cc,#8f979d);box-shadow:0 1px 3px 0 var(--surface-shadow)}
+  .sq-card .ph.label{display:flex;align-items:flex-end;padding:var(--pad-md1);
+    color:#fff;font-size:14px;line-height:16px;font-weight:600;letter-spacing:-.5px;
+    text-shadow:0 1px 2px rgba(0,0,0,.35)}
+  .sq-card .cap{margin-top:var(--pad-md1);font-size:12px;line-height:16px;
+    letter-spacing:-.35px;color:var(--on-surface-primary);
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .sq-card .cap2{display:block;font-size:12px;line-height:16px;letter-spacing:-.35px;
+    color:var(--on-surface-secondary)}
+
+  /* Wide list card: artwork on the left, two lines of copy on the right. */
+  .list-card{
+    width:calc(100vw - 32px - var(--peek));height:80px;flex-shrink:0;display:flex;
+    align-items:center;gap:var(--pad-md2);text-align:left;border:none;padding:0;overflow:hidden;
+    background:var(--container-primary-inverse);border-radius:var(--radius-primary);
+    box-shadow:0 1px 3px 0 var(--surface-shadow);
+  }
+  .list-card .ph{width:80px;height:80px;flex-shrink:0;
+    background:linear-gradient(160deg,#c3c8cc,#8f979d)}
+  .list-card .txt{min-width:0;padding-right:var(--pad-md2);display:flex;flex-direction:column;gap:2px}
+  .list-card .t{font-size:14px;line-height:16px;font-weight:600;letter-spacing:-.5px;
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .list-card .d{font-size:12px;line-height:16px;letter-spacing:-.35px;color:var(--on-surface-secondary);
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+
+  /* Continue Listening row on Podcasts. */
+  .cl-row{
+    display:flex;align-items:center;gap:var(--pad-md2);width:100%;height:72px;padding:0 var(--pad-md2) 0 0;
+    background:var(--container-primary-inverse);border-radius:var(--radius-primary);
+    box-shadow:0 1px 3px 0 var(--surface-shadow);overflow:hidden;text-align:left;
+  }
+  .cl-row .ph{width:56px;height:56px;margin-left:var(--pad-md1);flex-shrink:0;
+    border-radius:var(--radius-primary);background:linear-gradient(160deg,#c3c8cc,#8f979d)}
+  .cl-row .txt{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+  .cl-row .t{font-size:14px;line-height:16px;font-weight:600;letter-spacing:-.5px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .cl-row .d{font-size:12px;line-height:16px;letter-spacing:-.35px;color:var(--on-surface-secondary)}
+  .cl-row .act{width:20px;height:20px;flex-shrink:0;opacity:.7}
+
+  /* Search field, the app's own shape: white plate, 44 tall, primary radius. */
+  .search-field{
+    display:flex;align-items:center;gap:var(--pad-md1);height:44px;padding:0 var(--pad-md2);
+    margin-bottom:var(--pad-lg);background:var(--container-primary-inverse);
+    border-radius:var(--radius-primary);box-shadow:0 1px 3px 0 var(--surface-shadow);
+  }
+  .search-field .icon{width:20px;height:20px;flex-shrink:0}
+  .search-field input{
+    flex:1;min-width:0;border:none;background:none;font:inherit;font-size:16px;line-height:20px;
+    color:var(--on-surface-primary);outline:none;
+  }
+  .search-field input::placeholder{color:var(--on-surface-secondary)}
   [hidden]{display:none !important}
 </style>
 </head>
 <body>
+
+<header class="app-header" id="appHeader">
+  <div class="brand"><img src="assets/app/ihr-logo.svg" alt=""><span>iHeart</span></div>
+  <div class="title" id="headerTitle" hidden>Search</div>
+  <button class="h-btn" id="hdrSearch" aria-label="Search"><img src="assets/v2/search.svg" alt=""></button>
+  <button class="h-btn" aria-label="Notifications"><img src="assets/app/bellIcon.svg" alt=""><span class="badge">1</span></button>
+  <button class="h-btn" aria-label="Settings"><img src="assets/app/settings.svg" alt=""></button>
+</header>
 
 <main class="page view is-active" id="viewRadio">
   <div class="top-sticky">
@@ -534,48 +774,51 @@
 </main>
 
 <main class="page view" id="viewHome">
-  <h1 class="screen-title">Home</h1>
-  <section class="shelf" id="shelfPresets"></section>
-  <section class="shelf" id="shelfDial"></section>
-  <section class="shelf" id="shelfRecent"></section>
-  <section class="shelf" id="shelfLibrary"></section>
-  <section class="shelf" id="shelfTrending"></section>
-  <div class="tab-note" id="homeNote"></div>
+  <section class="sec" id="secPresets"></section>
+  <section class="sec" id="secDial"></section>
+  <div class="ad-slot">320 x 50</div>
+  <section class="sec" id="secRecent"></section>
+  <section class="sec" id="secLibrary"></section>
+  <section class="sec" id="secTrending"></section>
+  <section class="sec" id="secTopPodcasts"></section>
+  <section class="sec" id="secTopPlaylists"></section>
+  <section class="sec" id="secTopArtists"></section>
 </main>
 
 <main class="page view" id="viewSearch">
-  <div class="searchbar">
+  <div class="search-field">
     <img class="icon" src="assets/v2/search.svg" alt="">
-    <input id="searchInput" type="search" placeholder="Artists, stations, or podcasts" autocomplete="off">
+    <input id="searchInput" type="search" placeholder="What do you want to listen to?" autocomplete="off">
     <button class="search-clear" id="searchClear" aria-label="Clear" hidden>
       <img class="icon" src="assets/v2/close.svg" alt="">
     </button>
   </div>
   <section id="searchLanding">
-    <section class="shelf" id="shelfHistory"></section>
-    <h2 class="sec-title">Browse All</h2>
-    <div class="genre-grid" id="genreGrid"></div>
+    <section class="sec" id="shelfHistory"></section>
+    <section class="sec" id="secPopularPods"></section>
+    <section class="sec" id="secBrowseAll"></section>
   </section>
   <p class="search-hint" id="searchHint" hidden></p>
   <section class="guide" id="searchResults"></section>
 </main>
 
 <main class="page view" id="viewPodcasts">
-  <h1 class="screen-title">Podcasts</h1>
-  <div class="tab-note">This prototype covers live radio. The sections below are the ones the app shows here.</div>
-  <ul class="sec-list">
-    <li>Continue listening</li><li>Featured podcasts</li><li>iHeart Podcast Network</li>
-    <li>Popular podcasts</li><li>Recommended for you</li><li>Topics</li>
-  </ul>
+  <section class="sec" id="secContinue"></section>
+  <div class="ad-slot">320 x 50</div>
+  <section class="sec" id="secPodRec"></section>
+  <section class="sec" id="secPodTop"></section>
+  <section class="sec" id="secPodPicks"></section>
+  <section class="sec" id="secPodNetworks"></section>
+  <section class="sec" id="secPodTopics"></section>
 </main>
 
 <main class="page view" id="viewPlaylists">
-  <h1 class="screen-title">Playlists</h1>
-  <div class="tab-note">This prototype covers live radio. The sections below are the ones the app shows here.</div>
-  <ul class="sec-list">
-    <li>Made for you</li><li>Recommended for you</li><li>Featured playlist</li>
-    <li>Moods &amp; activities</li><li>Decades</li><li>Playlist genres</li>
-  </ul>
+  <section class="sec" id="secPlRec"></section>
+  <div class="ad-slot">320 x 50</div>
+  <section class="sec" id="secPlMoods"></section>
+  <section class="sec" id="secPlDecades"></section>
+  <section class="sec" id="secPlFeatured"></section>
+  <section class="sec" id="secPlGenres"></section>
 </main>
 
 
@@ -591,6 +834,17 @@
   <p class="note" id="sheetNote" hidden></p>
   <footer id="sheetFooter"><button id="sheetApply">Apply</button></footer>
 </section>
+
+<div class="mini" id="miniPlayer" hidden>
+  <div class="art"><img id="miniArt" src="" alt=""></div>
+  <div class="lines">
+    <span class="l1" id="miniL1"></span>
+    <span class="l2" id="miniL2"></span>
+    <span class="l3" id="miniL3"></span>
+  </div>
+  <button class="m-btn" aria-label="Queue"><img src="assets/app/presets.svg" alt=""></button>
+  <button class="m-play" id="miniPlay" aria-label="Play"><img src="assets/v2/play.svg" alt=""></button>
+</div>
 
 <div class="list-fade" id="listFade" aria-hidden="true"></div>
 
@@ -1141,7 +1395,23 @@ function toggleStation(id) {
 
 // Only the overlay changes, so repaint that rather than rebuilding 60 rows and
 // disturbing the scroll position.
+function renderMini() {
+  const st = state.stations.find((s) => s.id === state.currentId);
+  const mini = $('miniPlayer');
+  if (!st) { mini.hidden = true; return; }
+  mini.hidden = false;
+  const show = showAt(st, nowHours());
+  const t = state.track;
+  $('miniArt').src = t && t.art ? t.art : st.logo;
+  $('miniL1').textContent = st.name;
+  $('miniL2').textContent = t ? t.title : (show ? show.title : st.name);
+  $('miniL3').textContent = t ? t.artist : (st.description || st.genre);
+  $('miniPlay').querySelector('img').src = state.playing ? 'assets/v2/stop.svg' : 'assets/v2/play.svg';
+  $('miniPlay').setAttribute('aria-label', state.playing ? 'Stop' : 'Play');
+}
+
 function renderPlayState() {
+  renderMini();
   document.querySelectorAll('.station').forEach((el) => {
     const isCurrent = el.dataset.id === state.currentId;
     const live = state.playing && isCurrent;
@@ -1287,6 +1557,10 @@ const VIEW_IDS = { home: 'viewHome', search: 'viewSearch', radio: 'viewRadio',
 
 function switchView(id) {
   state.view = id;
+  // Search shows a plain title where the other tabs show the brand.
+  $('appHeader').querySelector('.brand').hidden = (id === 'search');
+  $('headerTitle').hidden = (id !== 'search');
+  $('hdrSearch').hidden = (id === 'search');
   Object.entries(VIEW_IDS).forEach(([k, elId]) => {
     $(elId).classList.toggle('is-active', k === id);
   });
@@ -1295,8 +1569,10 @@ function switchView(id) {
   $('chipsWrap').classList.remove('is-stowed');
   window.scrollTo(0, 0);
   renderTabBar();
-  if (id === 'home')   renderHome();
-  if (id === 'search') renderSearch();
+  if (id === 'home')      renderHome();
+  if (id === 'search')    renderSearch();
+  if (id === 'podcasts')  renderPodcasts();
+  if (id === 'playlists') renderPlaylists();
   if (id === 'radio')  updateListFade();
 }
 
@@ -1327,92 +1603,337 @@ function shelf(host, title, list, sub) {
   host.append(h, rail);
 }
 
-/* Home follows the section order in iHeart/Home/HomeTabView.swift: presets, ad
- * banner, radio dial, recently played, your library, trending, then top
- * podcasts / playlists / artists. The ad banner is off in a research build, and
- * the three "top" sections need podcast, playlist and artist data this
- * prototype does not have, so they are named in a note rather than faked. */
+/* Home is built to the Figma frame (Companion Tokens 46375:90380). Sections in
+ * order: Presets, Live Radio Dial, ad, Recently Played, Your Library, Trending,
+ * Top Podcasts, Top Playlists, Top Artist Radio.
+ *
+ * Stations are real. The podcast, playlist and artist sections have no data
+ * behind them, and the Figma frame itself shows them as grey placeholders, so
+ * placeholders are what this renders rather than invented titles or artwork. */
+const GLYPH_LOCATION =
+  '<svg class="cv" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" d="M13.8952 2.09528C14.0944 2.2945 14.1469 2.59746 14.0263 2.85208L8.88345 13.7092C8.7629 13.9637 8.49547 14.115 8.21526 14.0873C7.93505 14.0595 7.70249 13.8587 7.63419 13.5855L6.58835 9.40215L2.40498 8.35631C2.1318 8.28801 1.93099 8.05545 1.90324 7.77523C1.8755 7.49502 2.0268 7.22759 2.28128 7.10705L13.1384 1.96419C13.393 1.84358 13.696 1.89606 13.8952 2.09528ZM4.53557 7.51458L7.29979 8.20564C7.53864 8.26535 7.72514 8.45185 7.78486 8.69071L8.47591 11.4549L12.0222 3.96827L4.53557 7.51458Z" fill="currentColor"/></svg>';
+const GLYPH_CARET =
+  '<svg class="cv" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M10.774 5.8494L7.99642 8.62702L5.21879 5.8494C4.9396 5.5702 4.48859 5.5702 4.2094 5.8494C3.9302 6.12859 3.9302 6.5796 4.2094 6.85879L7.4953 10.1447C7.7745 10.4239 8.2255 10.4239 8.5047 10.1447L11.7906 6.85879C12.0698 6.5796 12.0698 6.12859 11.7906 5.8494C11.5114 5.57736 11.0532 5.5702 10.774 5.8494Z" fill="currentColor"/></svg>';
+
+/* A chip in a section header: white pill, informative blue label, optional
+ * leading glyph and a trailing caret. */
+function headChip(label, opts) {
+  const o = opts || {};
+  return '<button class="mini-chip">' + (o.lead || '') +
+         `<span class="ct">${label}</span>` + (o.caret === false ? '' : GLYPH_CARET) +
+         '</button>';
+}
+
+function secHead(host, title, trailing, leadIcon) {
+  const h = document.createElement('div');
+  h.className = 'sec-head';
+  h.innerHTML = (leadIcon ? `<img class="lead" src="${leadIcon}" alt="">` : '') +
+                `<h2>${title}</h2><span class="spacer"></span>`;
+  if (trailing) h.insertAdjacentHTML('beforeend', trailing);
+  host.appendChild(h);
+  return h;
+}
+
 function renderHome() {
   const byId = (id) => state.stations.find((s) => s.id === id);
   const recent = state.recent.map(byId).filter(Boolean);
   const presets = state.stations.filter((s) => state.favorites.has(s.id));
   const market = currentMarket();
 
-  shelf($('shelfPresets'), 'Your presets', presets, (s) => s.dial);
-  // The app puts a Radio Dial carousel on Home, which is the screen this
-  // prototype is about, so it links straight there.
-  shelf($('shelfDial'), `Radio dial`, state.stations.slice(0, 12), (s) => s.dial);
-  shelf($('shelfRecent'), 'Recently played', recent, (s) => s.dial);
+  // --- Presets ---
+  const pr = $('secPresets'); pr.innerHTML = '';
+  secHead(pr, 'Presets',
+    '<button class="icon-btn" aria-label="Edit presets"><img src="assets/app/edit-pencil.svg" alt=""></button>',
+    'assets/app/presets.svg');
+  const prow = document.createElement('div');
+  prow.className = 'preset-row';
+  presets.slice(0, 6).forEach((st) => {
+    const b = document.createElement('button');
+    b.className = 'preset';
+    b.innerHTML = `<img src="${st.logo}" alt="${st.name}">`;
+    b.addEventListener('click', () => { setStation(st.id, true); switchView('radio'); });
+    prow.appendChild(b);
+  });
+  for (let i = presets.length; i < 5; i++) {
+    const e = document.createElement('button');
+    e.className = 'preset empty'; e.textContent = '+';
+    e.setAttribute('aria-label', 'Add a preset');
+    prow.appendChild(e);
+  }
+  pr.appendChild(prow);
 
-  // Your Library: a horizontal row of category cards in the app.
-  const lib = $('shelfLibrary');
-  lib.innerHTML = '<h2>Your library</h2>';
-  const row = document.createElement('div');
-  row.className = 'lib-row';
-  [['Stations', 'radio'], ['Podcasts', 'podcasts'], ['Playlists', 'playlists'], ['Music', 'search']]
-    .forEach(([label, icon]) => {
+  // --- Live Radio Dial ---
+  const dl = $('secDial'); dl.innerHTML = '';
+  secHead(dl, 'Live Radio Dial',
+    headChip(market.city, { lead: GLYPH_LOCATION, caret: false }) + headChip('All Genres'));
+  const drail = document.createElement('div');
+  drail.className = 'preset-row';
+  state.stations.slice(0, 10).forEach((st) => {
+    const c = document.createElement('button');
+    c.className = 'dial-card';
+    c.innerHTML = `<span class="t">${st.name}</span>` +
+                  `<span class="d">${st.description || st.genre}</span>` +
+                  `<img class="play" src="assets/v2/play-fill.svg" alt="">`;
+    c.addEventListener('click', () => { setStation(st.id, true); switchView('radio'); });
+    drail.appendChild(c);
+  });
+  dl.appendChild(drail);
+  const scan = document.createElement('button');
+  scan.className = 'scan-btn';
+  scan.innerHTML = '<img src="assets/app/scan.svg" alt=""><span>Scan Stations</span>';
+  scan.addEventListener('click', () => switchView('radio'));
+  dl.appendChild(scan);
+
+  // --- Recently Played ---
+  const rc = $('secRecent'); rc.innerHTML = '';
+  secHead(rc, 'Recently Played', '<button class="icon-btn" aria-label="Edit recently played"><img src="assets/app/edit-pencil.svg" alt=""></button>');
+  const rrail = document.createElement('div');
+  rrail.className = 'preset-row';
+  if (recent.length) {
+    recent.forEach((st) => {
       const b = document.createElement('button');
-      b.className = 'lib-card';
-      b.innerHTML = TAB_ICONS[icon] + `<span>${label}</span>`;
-      b.addEventListener('click', () => {
-        if (label === 'Stations') switchView('radio');
-        else if (label === 'Podcasts') switchView('podcasts');
-        else if (label === 'Playlists') switchView('playlists');
-        else switchView('search');
-      });
-      row.appendChild(b);
+      b.className = 'preset'; b.style.width = '78px'; b.style.height = '78px';
+      b.innerHTML = `<img src="${st.logo}" alt="${st.name}">`;
+      b.addEventListener('click', () => { setStation(st.id, true); switchView('radio'); });
+      rrail.appendChild(b);
     });
-  lib.appendChild(row);
+  } else {
+    for (let i = 0; i < 5; i++) {
+      const d = document.createElement('div');
+      d.className = 'rank-thumb'; d.style.width = '78px'; d.style.height = '78px';
+      d.style.borderRadius = 'var(--radius-primary)';
+      rrail.appendChild(d);
+    }
+  }
+  rc.appendChild(rrail);
 
-  const shown = new Set([...presets, ...recent].map((s) => s.id));
-  shelf($('shelfTrending'), `Trending in ${market.label}`,
-        state.stations.filter((s) => !shown.has(s.id)).slice(0, 20), (s) => s.genre);
+  // --- Your Library ---
+  const lb = $('secLibrary'); lb.innerHTML = '';
+  secHead(lb, 'Your Library');
+  const pills = document.createElement('div');
+  pills.className = 'lib-pills';
+  [['Stations', 'radio'], ['Podcasts', 'podcasts'], ['Playlists', 'playlists']].forEach(([label, view]) => {
+    const b = document.createElement('button');
+    b.className = 'lib-pill'; b.textContent = label;
+    b.addEventListener('click', () => switchView(view));
+    pills.appendChild(b);
+  });
+  lb.appendChild(pills);
 
-  $('homeNote').textContent =
-    'Top podcasts, top playlists and top artists also sit on this screen in the app. ' +
-    'They need data this prototype does not carry, so they are left out rather than filled with placeholders.';
+  // --- Trending on iHeart: numbered rows ---
+  const tr = $('secTrending'); tr.innerHTML = '';
+  secHead(tr, 'Trending on iHeart');
+  const tlist = document.createElement('div');
+  tlist.className = 'rank-list';
+  for (let i = 1; i <= 3; i++) {
+    const r = document.createElement('div');
+    r.className = 'rank-row';
+    r.innerHTML = `<span class="rank-num">${i}</span>` +
+                  '<span class="rank-card-row"><span class="rank-thumb"></span>' +
+                  '<span class="rank-title">Title copy that can continue onto 2 lines</span></span>';
+    tlist.appendChild(r);
+  }
+  tr.appendChild(tlist);
+  const sa = document.createElement('button');
+  sa.className = 'show-all'; sa.textContent = 'Show All';
+  tr.appendChild(sa);
+
+  // --- The three ranked rails with no data behind them ---
+  const ranked = (host, title, chip, circle, cap2) => {
+    host.innerHTML = '';
+    secHead(host, title, headChip(chip));
+    const rail = document.createElement('div');
+    rail.className = 'rank-rail';
+    for (let i = 1; i <= 5; i++) {
+      const c = document.createElement('div');
+      c.className = 'rank-card';
+      c.innerHTML = `<span class="top"><span class="n">${i}</span><span class="ph${circle ? ' circle' : ''}"></span></span>` +
+                    `<span class="cap">Title Copy That Keeps...</span>` +
+                    (cap2 ? `<span class="cap2">${cap2}</span>` : '');
+      rail.appendChild(c);
+    }
+    host.appendChild(rail);
+  };
+  ranked($('secTopPodcasts'), 'Top Podcasts', 'All Categories', false);
+  ranked($('secTopPlaylists'), 'Top Playlists', 'All Genres', false);
+  ranked($('secTopArtists'), 'Top Artist Radio', 'All Genres', true, '& similar artists');
 }
 
 /* Search mirrors iHeart/Search: a bar, then recent searches and a Browse All
  * directory while idle, and results once you type. */
+/* Shared builders for the placeholder sections. The Figma frames for Podcasts
+ * and Playlists show real podcast artwork and artist photography, which this
+ * prototype has no right to reproduce, so every artwork slot renders as the
+ * same grey plate the Home frame itself uses. Category names are the app's own
+ * taxonomy and are kept, because they are what a participant navigates by. */
+function railOf(items, build) {
+  const rail = document.createElement('div');
+  rail.className = 'rail-x';
+  items.forEach((it, i) => rail.appendChild(build(it, i)));
+  return rail;
+}
+
+function wideCard(label, tint) {
+  const b = document.createElement('button');
+  b.className = 'wide-card' + (label ? ' cat-tile' : '');
+  if (label) b.textContent = label;
+  if (tint != null) b.style.background = `linear-gradient(135deg,hsl(${tint} 72% 46%),hsl(${(tint + 34) % 360} 68% 34%))`;
+  return b;
+}
+
+function squareCard(caption, sub, label, tint) {
+  const b = document.createElement('button');
+  b.className = 'sq-card';
+  b.innerHTML = `<span class="ph${label ? ' label' : ''}">${label || ''}</span>` +
+                (caption ? `<span class="cap">${caption}</span>` : '') +
+                (sub ? `<span class="cap2">${sub}</span>` : '');
+  if (tint != null) {
+    b.querySelector('.ph').style.background =
+      `linear-gradient(135deg,hsl(${tint} 72% 46%),hsl(${(tint + 34) % 360} 68% 34%))`;
+  }
+  return b;
+}
+
+function listCard(title, desc) {
+  const b = document.createElement('button');
+  b.className = 'list-card';
+  b.innerHTML = '<span class="ph"></span>' +
+                `<span class="txt"><span class="t">${title}</span><span class="d">${desc}</span></span>`;
+  return b;
+}
+
+function grid2Of(labels) {
+  const g = document.createElement('div');
+  g.className = 'grid2';
+  labels.forEach((l, i) => g.appendChild(wideCard(l, (i * 41 + 12) % 360)));
+  return g;
+}
+
+/* Search: a field, Most Popular Podcasts, then Browse All as a two column grid,
+ * matching the Search frame. Recent searches stay above it because the
+ * prototype needs a way back to a query a participant already ran. */
 function renderSearchLanding() {
   const hist = $('shelfHistory');
   hist.innerHTML = '';
   if (state.searches.length) {
-    const h = document.createElement('h2');
-    h.textContent = 'Recent searches';
+    secHead(hist, 'Recent searches');
     const rail = document.createElement('div');
     rail.className = 'lib-row';
     state.searches.forEach((q) => {
       const b = document.createElement('button');
       b.className = 'lib-card';
       b.textContent = q;
-      b.addEventListener('click', () => {
-        $('searchInput').value = q;
-        renderSearch();
-      });
+      b.addEventListener('click', () => { $('searchInput').value = q; renderSearch(); });
       rail.appendChild(b);
     });
-    hist.append(h, rail);
+    hist.appendChild(rail);
   }
 
-  // Browse All, built from the genres actually present in the data.
-  const grid = $('genreGrid');
-  grid.innerHTML = '';
+  const pop = $('secPopularPods');
+  pop.innerHTML = '';
+  secHead(pop, 'Most Popular Podcasts');
+  pop.appendChild(railOf([0, 1, 2, 3, 4], () => wideCard()));
+
+  // Browse All, built from the genres actually present in the station data.
+  const ba = $('secBrowseAll');
+  ba.innerHTML = '';
+  secHead(ba, 'Browse All');
   // "Default" and "Radio" are placeholders the API returns for stations with no
   // genre set, not things anyone would browse by.
   const JUNK = new Set(['Default', 'Radio', 'US Partner Digital']);
   const genres = [...new Set(Object.values(window.LRD_US.stations).map((x) => x.genre))]
     .filter((g) => g && !JUNK.has(g)).sort();
-  genres.slice(0, 16).forEach((g, i) => {
-    const b = document.createElement('button');
-    b.className = 'genre-card';
-    b.textContent = g;
-    // Spread the tint so the grid does not read as sixteen identical blocks.
-    b.style.background = `hsl(${(i * 47) % 360} 42% 32%)`;
-    b.addEventListener('click', () => { $('searchInput').value = g; renderSearch(); });
-    grid.appendChild(b);
+  const grid = grid2Of(genres.slice(0, 16));
+  [...grid.children].forEach((b, i) => {
+    b.addEventListener('click', () => { $('searchInput').value = genres[i]; renderSearch(); });
   });
+  ba.appendChild(grid);
+}
+
+/* Podcasts, to its frame: Continue Listening, ad, Recommended For You,
+ * Today's Top Podcasts, Our Podcast Picks, iHeartPodcast Networks, Topics. */
+const PODCAST_TOPICS = [
+  'Top 100 Overall', 'Top 100 True Crime', 'Comedy', 'Society & Culture',
+  'Sports', 'Crime', 'News', 'Health', 'Business & Finance', 'Politics',
+  'Spirituality', 'Black Culture', 'Entertainment', 'Latino', 'Music', 'History',
+];
+
+function renderPodcasts() {
+  const cl = $('secContinue');
+  cl.innerHTML = '';
+  secHead(cl, 'Continue Listening');
+  const row = document.createElement('div');
+  row.className = 'cl-row';
+  row.innerHTML = '<span class="ph"></span>' +
+    '<span class="txt"><span class="t">Podcast Episode Title</span>' +
+    '<span class="d">26 minutes remaining</span></span>' +
+    '<img class="act" src="assets/v2/row-overflow.svg" alt="">';
+  cl.appendChild(row);
+
+  const rec = $('secPodRec');
+  rec.innerHTML = '';
+  secHead(rec, 'Recommended For You');
+  rec.appendChild(railOf([0, 1, 2, 3, 4], () =>
+    squareCard('Title Copy That Keeps...', 'Subtitle copy')));
+
+  const top = $('secPodTop');
+  top.innerHTML = '';
+  secHead(top, "Today's Top Podcasts");
+  top.appendChild(railOf([0, 1, 2, 3, 4], () =>
+    squareCard('Title Copy That Keeps...', 'Subtitle copy')));
+
+  const picks = $('secPodPicks');
+  picks.innerHTML = '';
+  secHead(picks, 'Our Podcast Picks');
+  picks.appendChild(railOf([0, 1, 2], () =>
+    listCard('Podcast Title', 'Description that keeps going and going')));
+
+  const nets = $('secPodNetworks');
+  nets.innerHTML = '';
+  secHead(nets, 'iHeartPodcast Networks');
+  nets.appendChild(railOf([0, 1, 2, 3], () => wideCard()));
+
+  const topics = $('secPodTopics');
+  topics.innerHTML = '';
+  secHead(topics, 'Topics');
+  topics.appendChild(grid2Of(PODCAST_TOPICS));
+}
+
+/* Playlists, to its frame: Recommended For You, ad, Moods & Activities,
+ * Decades, Featured Playlists, Genres. */
+const PL_MOODS = ['Workout', 'Chill', 'Sleep', 'Work', 'Party', 'Focus'];
+const PL_DECADES = ['Now', '2010s', '2000s', '1990s', '1980s', '1970s'];
+const PL_GENRES = [
+  'Charts', 'Pop', 'Country', 'Classic Rock', 'Oldies & Classic Hits',
+  'Alternative', 'Rock', 'R&B & Throwbacks', 'Hip Hop', 'Kids & Family',
+  'Christian', 'Gospel',
+];
+
+function renderPlaylists() {
+  const rec = $('secPlRec');
+  rec.innerHTML = '';
+  secHead(rec, 'Recommended For You');
+  rec.appendChild(railOf([0, 1, 2, 3, 4], () => squareCard('Your Weekly Mix')));
+
+  const moods = $('secPlMoods');
+  moods.innerHTML = '';
+  secHead(moods, 'Moods & Activities');
+  moods.appendChild(railOf(PL_MOODS, (m, i) => squareCard(null, null, m, (i * 53 + 30) % 360)));
+
+  const dec = $('secPlDecades');
+  dec.innerHTML = '';
+  secHead(dec, 'Decades');
+  dec.appendChild(railOf(PL_DECADES, (d, i) => squareCard(null, null, d, (i * 47 + 200) % 360)));
+
+  const feat = $('secPlFeatured');
+  feat.innerHTML = '';
+  secHead(feat, 'Featured Playlists');
+  feat.appendChild(railOf([0, 1, 2], () => listCard('Playlist Name', 'Playlist Description')));
+
+  const gen = $('secPlGenres');
+  gen.innerHTML = '';
+  secHead(gen, 'Genres');
+  gen.appendChild(grid2Of(PL_GENRES));
 }
 
 function noteSearch(q) {
@@ -1526,6 +2047,7 @@ function renderTabBar() {
 
 function render() {
   renderNowPlaying();
+  renderMini();
   renderChips();
   renderGuide();
 }
@@ -1566,6 +2088,8 @@ function render() {
   audio.addEventListener('error',   () => { state.buffering = false; renderPlayState(); flashError('Unable to play this stream'); });
   if (home && home.stream) audio.src = home.stream;
 
+  $('hdrSearch').addEventListener('click', () => switchView('search'));
+  $('miniPlay').addEventListener('click', () => toggleStation(state.currentId));
   $('searchInput').addEventListener('input', renderSearch);
   $('searchInput').addEventListener('change', () => noteSearch($('searchInput').value.trim()));
   $('searchClear').addEventListener('click', () => {

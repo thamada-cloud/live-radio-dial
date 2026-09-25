@@ -561,23 +561,25 @@
     background:none;font-size:14px;font-weight:600;color:var(--on-surface-primary)}
 
   /* Numbered ranking rows and cards. */
+  /* ContentCardTrending.swift: HStack spacing 0 of a 40x40 left aligned numeral
+     and a card of a 56pt image, Padding.md1, and a two line subtitle2 title. */
   .rank-list{display:flex;flex-direction:column;gap:var(--pad-md1)}
-  .rank-row{display:flex;align-items:center;gap:var(--pad-md1);width:100%;text-align:left}
+  .rank-row{display:flex;align-items:center;gap:0;width:100%;text-align:left}
   .rank-num{
-    font-size:34px;line-height:38px;font-weight:800;width:30px;flex-shrink:0;text-align:center;
-    color:transparent;-webkit-text-stroke:1.5px var(--brand-red);
+    width:40px;height:40px;flex-shrink:0;
+    object-fit:contain;object-position:left center;
   }
   .rank-card-row{
     flex:1;min-width:0;height:var(--img-list-small);display:flex;align-items:center;
-    gap:var(--pad-md2);background:var(--container-primary-inverse);
+    gap:var(--pad-md1);background:var(--container-primary-inverse);
     border-radius:var(--radius-primary);box-shadow:0 1px 3px 0 var(--surface-shadow);
     overflow:hidden;
   }
   .rank-thumb{width:var(--img-list-small);height:var(--img-list-small);flex-shrink:0;
     background:linear-gradient(160deg,#c3c8cc,#9aa1a6);overflow:hidden}
   .rank-thumb img{width:100%;height:100%;object-fit:cover}
-  .rank-title{font-size:12px;line-height:16px;letter-spacing:-.35px;
-    color:var(--on-surface-primary);padding-right:var(--pad-md2);
+  .rank-title{font-size:14px;line-height:16px;font-weight:600;letter-spacing:-.5px;
+    color:var(--on-surface-primary);padding-right:var(--pad-md1);
     display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
   .show-all{display:flex;align-items:center;justify-content:center;width:100%;height:40px;
     margin-top:var(--pad-lg);background:var(--container-primary-inverse);border:none;
@@ -592,10 +594,9 @@
      and drawn behind it, with its top padded to cardWidth - height - 10. */
   .rank-card{display:flex;align-items:flex-start;flex-shrink:0;text-align:left}
   .rank-card .n{
-    flex-shrink:0;position:relative;z-index:0;
+    flex-shrink:0;position:relative;z-index:0;display:block;
     margin-top:calc(92px - 40px - 10px);margin-right:-2px;
-    font-size:40px;line-height:40px;font-weight:800;color:transparent;
-    -webkit-text-stroke:1.5px var(--brand-red);
+    height:40px;width:auto;
   }
   .rank-card .top{display:block;position:relative;z-index:1;width:92px;flex-shrink:0}
   .rank-card .ph{display:block;width:92px;height:92px;border-radius:var(--radius-primary);
@@ -1791,7 +1792,7 @@ function renderHome() {
     const item = trending && trending[i - 1];
     const r = document.createElement('div');
     r.className = 'rank-row';
-    r.innerHTML = `<span class="rank-num">${i}</span>` +
+    r.innerHTML = `<img class="rank-num" src="assets/rank/index${i}.svg" alt="${i}">` +
       `<span class="rank-card-row"><span class="rank-thumb">${art(item)}</span>` +
       `<span class="rank-title">${item ? esc(item.title) : 'Title copy that can continue onto 2 lines'}</span></span>`;
     tlist.appendChild(r);
@@ -1813,7 +1814,7 @@ function renderHome() {
       const c = document.createElement('div');
       c.className = 'rank-card';
       c.innerHTML =
-        `<span class="n">${i}</span><span class="top">` +
+        `<img class="n" src="assets/rank/index${i}.svg" alt="${i}"><span class="top">` +
         `<span class="ph${circle ? ' circle' : ''}">${art(item)}</span>` +
         `<span class="cap">${item ? esc(item.title) : 'Title Copy That Keeps...'}</span>` +
         (cap2 ? `<span class="cap2">${cap2}</span>` : '') + '</span>';

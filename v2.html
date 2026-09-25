@@ -501,14 +501,28 @@
     color:var(--on-surface-secondary)}
   .mini .l2{font-size:12px;line-height:16px;letter-spacing:-.35px;font-weight:600;
     color:var(--on-surface-primary)}
+  /* MiniPlayer.swift is a VStack of the row and then ProgressBarView: a 3pt
+     containerTertiary track with a containerEmphasis fill, so the bar sits
+     between the player and the tab bar. */
+  .mini{flex-wrap:wrap}
+  .mini .progress{
+    /* The row carries the Padding.sm1 inset; the bar is a sibling of it in the
+       VStack, so it runs the full width of the player, edge to edge. */
+    flex:0 0 calc(100% + var(--pad-md1));order:2;height:3px;
+    background:var(--container-quaternary);
+    margin:var(--pad-sm1) calc(-1 * var(--pad-sm1)) calc(-1 * var(--pad-sm1));
+  }
+  .mini .progress i{display:block;height:100%;background:var(--container-emphasis,var(--brand-red))}
   .mini .controls{display:flex;align-items:center;gap:var(--pad-sm1);flex-shrink:0;
     min-width:80px;max-width:100px;justify-content:flex-end}
   .mini .m-btn{width:40px;height:40px;align-items:center;justify-content:center;
     padding:0;flex-shrink:0}
   .mini .m-btn img{width:24px;height:24px}
-  .mini .m-play{width:40px;height:40px;border-radius:999px;background:var(--on-surface-primary);
-    display:flex;align-items:center;justify-content:center;flex-shrink:0}
-  .mini .m-play img{width:22px;height:22px}
+  /* PlayButtonView draws Asset.Icons.playbackPlay at frame(iconSize, iconSize),
+     and that asset is the filled circle with the glyph knocked out of it, so
+     the button is one 40pt image rather than a circle with a small triangle. */
+  .mini .m-play{width:40px;height:40px;padding:0;flex-shrink:0}
+  .mini .m-play img{width:40px;height:40px;display:block}
 
   /* Section header with an optional trailing control. */
   .sec-head{display:flex;align-items:center;gap:var(--pad-md1);margin-bottom:var(--pad-md2)}
@@ -600,7 +614,7 @@
     border-radius:999px;box-shadow:0 1px 3px 0 var(--surface-shadow);
     color:var(--on-surface-informative);font-size:16px;line-height:20px;font-weight:600}
 
-  .rank-rail{display:flex;gap:var(--pad-md2);overflow-x:auto;scrollbar-width:none;
+  .rank-rail{display:flex;align-items:flex-start;gap:var(--pad-md2);overflow-x:auto;scrollbar-width:none;
     margin:0 calc(-1 * var(--pad-lg));padding:0 var(--pad-lg)}
   .rank-rail::-webkit-scrollbar{display:none}
   /* ContentCardTopRanker.swift is an HStack: the numeral sits in its own column
@@ -703,7 +717,10 @@
      Sizes come straight out of the Figma frames: the wide card is 165x94 in a
      343 column, the square carousel card is image/carousel/1:1_default (92),
      and the grids are two columns of wide cards with 12pt gutters. */
-  .rail-x{display:flex;gap:var(--pad-md2);overflow-x:auto;overflow-y:hidden;scrollbar-width:none;
+  /* A button centres its own content, so a card left to stretch to the tallest
+     card in the row floats its artwork down by half a line. Top align them. */
+  .rail-x{display:flex;align-items:flex-start;gap:var(--pad-md2);
+    overflow-x:auto;overflow-y:hidden;scrollbar-width:none;
     margin:0 calc(-1 * var(--pad-lg));padding:0 var(--pad-lg) var(--pad-sm1)}
   .rail-x::-webkit-scrollbar{display:none}
 
@@ -906,8 +923,9 @@
   </div>
   <div class="controls">
     <button class="m-btn" aria-label="Presets"><img src="assets/app/presets.svg" alt=""></button>
-    <button class="m-play" id="miniPlay" aria-label="Play"><img src="assets/v2/play.svg" alt=""></button>
+    <button class="m-play" id="miniPlay" aria-label="Play"><img src="assets/v2/playback-play.svg" alt=""></button>
   </div>
+  <div class="progress" aria-hidden="true"><i id="miniProgress" style="width:50%"></i></div>
 </div>
 
 <div class="list-fade" id="listFade" aria-hidden="true"></div>
@@ -1477,7 +1495,8 @@ function renderMini() {
   $('miniL1').textContent = st.name;
   $('miniL2').textContent = t ? t.title : (show ? show.title : st.name);
   $('miniL3').textContent = t ? t.artist : (st.description || st.genre);
-  $('miniPlay').querySelector('img').src = state.playing ? 'assets/v2/stop.svg' : 'assets/v2/play.svg';
+  $('miniPlay').querySelector('img').src =
+    state.playing ? 'assets/v2/playback-stop.svg' : 'assets/v2/playback-play.svg';
   $('miniPlay').setAttribute('aria-label', state.playing ? 'Stop' : 'Play');
 }
 
@@ -2101,6 +2120,24 @@ function grid2Of(items, limit) {
 /* Search: a field, Most Popular Podcasts, then Browse All as a two column grid,
  * matching the Search frame. Recent searches stay above it because the
  * prototype needs a way back to a query a participant already ran. */
+
+/* SectionLoadingVM never puts .adBanner in sectionOrder. It splices it into the
+ * list of sections that actually rendered, at adBannerPlacement, which defaults
+ * to .atIndex(1) — after the first surviving section, not after whichever
+ * section happens to be first in the markup. With Continue Listening and
+ * Recommended For You both dropped for want of a profile, index 1 on Podcasts
+ * lands after Today's Top Podcasts, and on Playlists after Moods & Activities.
+ * SearchDirectoryViewModel passes .none, so Search carries no ad at all. */
+function placeAd(view, index) {
+  const root = $(VIEW_IDS[view]);
+  const ad = root.querySelector('.ad-slot');
+  if (!ad) return;
+  const shown = [...root.querySelectorAll('section.sec')].filter((el) => !el.hidden);
+  const at = Math.min(index, shown.length);
+  if (at === 0) root.prepend(ad);
+  else shown[at - 1].after(ad);
+}
+
 /* Search, to SearchDirectoryView: a field, then two grids. Most Popular
  * Podcasts is the podcast directory cut to its first two entries, and Browse
  * All is AMP's live station genres. Both are Grid, cardShape .wide,
@@ -2159,6 +2196,7 @@ function renderPodcasts() {
   shelf($('secPodTopics'), 'Topics', state.shelves.podcastDirectory,
         (items) => grid2Of(items));
 
+  placeAd('podcasts', 1);
   loadShelves(['popularPodcasts', 'featuredPodcasts', 'podcastNetworks', 'podcastDirectory'], 'podcasts');
 }
 
@@ -2180,6 +2218,7 @@ function renderPlaylists() {
   shelf($('secPlGenres'), 'Genres', state.shelves.playlistGenres,
         (items) => grid2Of(items));
 
+  placeAd('playlists', 1);
   loadShelves(['moods', 'decades', 'featuredPlaylists', 'playlistGenres'], 'playlists');
 }
 

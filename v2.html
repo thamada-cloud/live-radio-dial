@@ -32,11 +32,18 @@
        shows 3 on a phone, so a 375pt screen gives 91pt cards, not the 112 I
        had guessed. */
     --peek:48px;
+    /* Carousel.itemWidth is (container - cardPeek 48 - horizontalPadding 16 -
+       itemSpacing 12 * count) / count, and Grid is (container - 16*2 -
+       12*(cols-1)) / cols. On a 375pt screen that gives 91 / 143 / 299 / 165. */
+    --card-sq3:calc((100vw - 48px - 16px - 36px) / 3);
+    --card-sq2:calc((100vw - 48px - 16px - 24px) / 2);
+    --card-featured:calc(100vw - 48px - 16px - 12px);
+    --grid2:calc((100vw - 32px - 12px) / 2);
     /* image sizes straight out of the Figma variable set */
     --img-carousel-xxsmall:40px; --img-carousel-xsmall:56px;
     --img-carousel-small:66px;  --img-carousel-default:92px;
     --img-list-small:56px;
-    --card-3:calc((100vw - 48px - 16px - 16px) / 3);
+    --card-3:var(--card-sq3);
     --card-2:calc((100vw - 48px - 16px - 24px) / 2);
     --radius-circular:999px;
     --body:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
@@ -604,11 +611,13 @@
     background:linear-gradient(160deg,#c3c8cc,#9aa1a6);overflow:hidden}
   .rank-card .ph img{width:100%;height:100%;object-fit:cover;display:block}
   .rank-card .ph.circle{border-radius:999px}
-  .rank-card .top .cap{margin-top:var(--pad-md1);font-size:12px;line-height:16px;letter-spacing:-.35px;
-    color:var(--on-surface-primary);
+  .rank-card .top .cap{margin-top:var(--pad-sm1);font-size:14px;line-height:16px;font-weight:600;
+    letter-spacing:-.5px;color:var(--on-surface-primary);text-align:center;
     display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-  .rank-card .top .cap2{display:block;font-size:12px;line-height:16px;letter-spacing:-.35px;
-    color:var(--on-surface-secondary)}
+  .rank-card .top .cap2{display:-webkit-box;margin-top:var(--pad-sm1);
+    font-size:12px;line-height:16px;letter-spacing:-.35px;text-align:center;
+    color:var(--on-surface-primary);
+    -webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 
   .error{
     position:fixed;top:96px;left:50%;transform:translateX(-50%);z-index:60;
@@ -692,44 +701,44 @@
     margin:0 calc(-1 * var(--pad-lg));padding:0 var(--pad-lg) var(--pad-sm1)}
   .rail-x::-webkit-scrollbar{display:none}
 
+  /* ContentCardWide is 16:9 of its width, and every card the app draws with
+     contentCardConfiguration .imageOnly has its label baked into the artwork,
+     so these carry no text of their own. */
   .wide-card{
-    width:calc((100vw - 32px - 12px) / 2);height:94px;flex-shrink:0;border:none;padding:0;
+    width:var(--card-sq2);aspect-ratio:16/9;flex-shrink:0;border:none;padding:0;
     border-radius:var(--radius-primary);overflow:hidden;position:relative;
     box-shadow:0 1px 3px 0 var(--surface-shadow);
     background:linear-gradient(160deg,#c3c8cc,#8f979d);
   }
+  .wide-card img{width:100%;height:100%;object-fit:cover;display:block}
   .grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--pad-md2)}
   .grid2 .wide-card{width:100%}
 
-  /* Category tile: gradient plate with the label sitting bottom left. */
-  .cat-tile{
-    display:flex;align-items:flex-end;padding:var(--pad-md2);
-    color:#fff;font-size:14px;line-height:16px;font-weight:600;letter-spacing:-.5px;
-    text-align:left;text-shadow:0 1px 2px rgba(0,0,0,.35);
-  }
-
   /* Square carousel card: 92pt artwork, then up to two lines of title. */
-  .sq-card{display:block;width:var(--card-3);flex-shrink:0;text-align:left;background:none;border:none;padding:0}
+  .sq-card{display:block;width:var(--card-sq3);flex-shrink:0;text-align:left;background:none;border:none;padding:0}
   .sq-card .ph{display:block;width:100%;aspect-ratio:1/1;border-radius:var(--radius-primary);
-    background:linear-gradient(160deg,#c3c8cc,#8f979d);box-shadow:0 1px 3px 0 var(--surface-shadow)}
-  .sq-card .ph.label{display:flex;align-items:flex-end;padding:var(--pad-md1);
-    color:#fff;font-size:14px;line-height:16px;font-weight:600;letter-spacing:-.5px;
-    text-shadow:0 1px 2px rgba(0,0,0,.35)}
-  .sq-card .cap{margin-top:var(--pad-md1);font-size:12px;line-height:16px;
-    letter-spacing:-.35px;color:var(--on-surface-primary);
+    overflow:hidden;background:linear-gradient(160deg,#c3c8cc,#8f979d);
+    box-shadow:0 1px 3px 0 var(--surface-shadow)}
+  .sq-card .ph img{width:100%;height:100%;object-fit:cover;display:block}
+  .sq-card .cap{margin-top:var(--pad-sm1);font-size:14px;line-height:16px;font-weight:600;
+    letter-spacing:-.5px;color:var(--on-surface-primary);text-align:center;
     display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-  .sq-card .cap2{display:block;font-size:12px;line-height:16px;letter-spacing:-.35px;
-    color:var(--on-surface-secondary)}
+  .sq-card .cap2{display:-webkit-box;margin-top:var(--pad-sm1);
+    font-size:12px;line-height:16px;letter-spacing:-.35px;text-align:center;
+    color:var(--on-surface-primary);
+    -webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 
   /* Wide list card: artwork on the left, two lines of copy on the right. */
+  /* ContentCardFeatured: cardWidth 299, a 92pt square image, then the copy. */
   .list-card{
-    width:calc(100vw - 32px - var(--peek));height:80px;flex-shrink:0;display:flex;
+    width:var(--card-featured);height:92px;flex-shrink:0;display:flex;
     align-items:center;gap:var(--pad-md2);text-align:left;border:none;padding:0;overflow:hidden;
     background:var(--container-primary-inverse);border-radius:var(--radius-primary);
     box-shadow:0 1px 3px 0 var(--surface-shadow);
   }
-  .list-card .ph{width:80px;height:80px;flex-shrink:0;
+  .list-card .ph{width:92px;height:92px;flex-shrink:0;overflow:hidden;
     background:linear-gradient(160deg,#c3c8cc,#8f979d)}
+  .list-card .ph img{width:100%;height:100%;object-fit:cover;display:block}
   .list-card .txt{min-width:0;padding-right:var(--pad-md2);display:flex;flex-direction:column;gap:2px}
   .list-card .t{font-size:14px;line-height:16px;font-weight:600;letter-spacing:-.5px;
     display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
@@ -946,6 +955,8 @@ const state = {
   // The four ranked Home sections, filled once from the live endpoints.
   home: { trending: null, podcasts: null, playlists: null, artists: null,
           loading: false, loaded: false },
+  // Section data for Search, Podcasts and Playlists, keyed by shelf name.
+  shelves: {},
 };
 
 const $ = (id) => document.getElementById(id);
@@ -1948,6 +1959,82 @@ async function fetchTopArtists() {
   }));
 }
 
+
+/* ---------- the collections behind Search, Podcasts and Playlists ----------
+ * Every one of these sections is a `leads` query on a collection tag, which is
+ * what RadioRepository reaches for. The tag names come from
+ * webapi/query/leads/constants.ts in the web monorepo, and the section that
+ * consumes each one comes from PodcastsContentTabView, PlaylistsContentTabView
+ * and SearchDirectoryView.
+ *
+ * Every card these return has its label baked into the artwork, which is why
+ * the app draws them with contentCardConfiguration .imageOnly. */
+const Q_LEADS_CARDS = `fragment commonCardFields on Card {
+  catalog { id } id img_uri link { urls { web device } } subtitle title }
+  query Leads($query: QueryInput!, $locale: String) { leads(query: $query, locale: $locale) { ...commonCardFields } }`;
+
+async function leads(collection) {
+  const d = await gql(Q_LEADS_CARDS, {
+    locale: HOME_LOCALE,
+    query: { subscription: [{ tags: [`collections/${collection}`, `countries/${HOME_COUNTRY}`] }] },
+  });
+  return (d?.leads ?? []).map((l) => ({
+    title: l.title || '',
+    sub: l.subtitle || '',
+    art: l.img_uri || '',
+  }));
+}
+
+/* Browse All is not a collection: SearchDirectoryViewModel.fetchRadioGenres
+ * calls RadioRepository.getLiveStationGenres, which is AMP's genre catalogue
+ * filtered to live stations. */
+async function fetchLiveGenres() {
+  const r = await fetch(`${AMP}/api/v3/catalog/genres?genreType=liveStation`);
+  if (!r.ok) throw new Error(`amp ${r.status}`);
+  const j = await r.json();
+  return (j.genres ?? []).map((g) => ({ title: g.genreName, art: g.image || '', id: g.id }));
+}
+
+/* Loads a set of sections in parallel into state.shelves, then repaints if the
+ * tab that wanted them is still the one on screen. Each key fails on its own. */
+function loadShelves(keys, view) {
+  const pending = keys.filter((k) => !(k in state.shelves));
+  if (!pending.length) return;
+  pending.forEach((k) => { state.shelves[k] = null; });
+  const SOURCES = {
+    podcastDirectory: () => leads('podcast-directory'),
+    podcastNetworks:  () => leads('podcast-networks'),
+    popularPodcasts:  () => leads('popular-podcasts'),
+    featuredPodcasts: () => leads('featured-podcasts'),
+    playlistGenres:   () => leads('genre-playlists'),
+    moods:            () => leads('perfect-for'),
+    decades:          () => leads('decades'),
+    featuredPlaylists: fetchTopPlaylists,
+    liveGenres:        fetchLiveGenres,
+  };
+  Promise.all(pending.map((k) =>
+    SOURCES[k]().then((v) => { state.shelves[k] = v; }).catch(() => { state.shelves[k] = []; })
+  )).then(() => {
+    if (state.view === view) {
+      if (view === 'search') renderSearch();
+      if (view === 'podcasts') renderPodcasts();
+      if (view === 'playlists') renderPlaylists();
+    }
+  });
+}
+
+/* SectionLoadingVM.displayableSections drops any section whose data came back
+ * empty, so a logged out listener never sees an empty shelf. Same rule here:
+ * a section with nothing behind it renders nothing at all. */
+function shelf(host, title, items, build, trailing) {
+  host.innerHTML = '';
+  if (!items || !items.length) { host.hidden = true; return false; }
+  host.hidden = false;
+  secHead(host, title, trailing);
+  host.appendChild(build(items));
+  return true;
+}
+
 /* Shared builders for the placeholder sections. The Figma frames for Podcasts
  * and Playlists show real podcast artwork and artist photography, which this
  * prototype has no right to reproduce, so every artwork slot renders as the
@@ -1960,48 +2047,57 @@ function railOf(items, build) {
   return rail;
 }
 
-function wideCard(label, tint) {
+/* An .imageOnly card: the artwork is the whole card, label included. */
+function wideCard(item) {
   const b = document.createElement('button');
-  b.className = 'wide-card' + (label ? ' cat-tile' : '');
-  if (label) b.textContent = label;
-  if (tint != null) b.style.background = `linear-gradient(135deg,hsl(${tint} 72% 46%),hsl(${(tint + 34) % 360} 68% 34%))`;
+  b.className = 'wide-card';
+  if (item && item.art) b.innerHTML = `<img src="${esc(item.art)}" alt="${esc(item.title || '')}" loading="lazy">`;
+  else b.setAttribute('aria-label', item ? item.title : '');
   return b;
 }
 
-function squareCard(caption, sub, label, tint) {
+/* squareDefault: 91pt artwork, then doubleTitle or nothing at all. */
+function squareCard(item, withText) {
   const b = document.createElement('button');
   b.className = 'sq-card';
-  b.innerHTML = `<span class="ph${label ? ' label' : ''}">${label || ''}</span>` +
-                (caption ? `<span class="cap">${caption}</span>` : '') +
-                (sub ? `<span class="cap2">${sub}</span>` : '');
-  if (tint != null) {
-    b.querySelector('.ph').style.background =
-      `linear-gradient(135deg,hsl(${tint} 72% 46%),hsl(${(tint + 34) % 360} 68% 34%))`;
-  }
+  // .doubleTitle is a two line title with no subtitle at all, per
+  // ContentCardConfiguration.showSubtitle.
+  b.innerHTML =
+    `<span class="ph">${art(item)}</span>` +
+    (withText && item ? `<span class="cap">${esc(item.title)}</span>` : '');
+  if (!withText && item) b.setAttribute('aria-label', item.title);
   return b;
 }
 
-function listCard(title, desc) {
+/* ContentCardFeatured: square artwork beside a subtitle2 title and a caption. */
+function listCard(item) {
   const b = document.createElement('button');
   b.className = 'list-card';
-  b.innerHTML = '<span class="ph"></span>' +
-                `<span class="txt"><span class="t">${title}</span><span class="d">${desc}</span></span>`;
+  b.innerHTML = `<span class="ph">${art(item)}</span>` +
+    `<span class="txt"><span class="t">${esc(item.title)}</span>` +
+    `<span class="d">${esc(item.sub || '')}</span></span>`;
   return b;
 }
 
-function grid2Of(labels) {
+function grid2Of(items, limit) {
   const g = document.createElement('div');
   g.className = 'grid2';
-  labels.forEach((l, i) => g.appendChild(wideCard(l, (i * 41 + 12) % 360)));
+  (limit ? items.slice(0, limit) : items).forEach((it) => g.appendChild(wideCard(it)));
   return g;
 }
 
 /* Search: a field, Most Popular Podcasts, then Browse All as a two column grid,
  * matching the Search frame. Recent searches stay above it because the
  * prototype needs a way back to a query a participant already ran. */
+/* Search, to SearchDirectoryView: a field, then two grids. Most Popular
+ * Podcasts is the podcast directory cut to its first two entries, and Browse
+ * All is AMP's live station genres. Both are Grid, cardShape .wide,
+ * contentCardConfiguration .imageOnly. Recent searches sit above them because
+ * the prototype needs a way back to a query a participant already ran. */
 function renderSearchLanding() {
   const hist = $('shelfHistory');
   hist.innerHTML = '';
+  hist.hidden = !state.searches.length;
   if (state.searches.length) {
     secHead(hist, 'Recent searches');
     const rail = document.createElement('div');
@@ -2016,111 +2112,63 @@ function renderSearchLanding() {
     hist.appendChild(rail);
   }
 
-  const pop = $('secPopularPods');
-  pop.innerHTML = '';
-  secHead(pop, 'Most Popular Podcasts');
-  pop.appendChild(railOf([0, 1, 2, 3, 4], () => wideCard()));
+  // SearchDirectoryView takes topics.prefix(2) for this shelf.
+  shelf($('secPopularPods'), 'Most Popular Podcasts', state.shelves.podcastDirectory,
+        (items) => grid2Of(items, 2));
 
-  // Browse All, built from the genres actually present in the station data.
-  const ba = $('secBrowseAll');
-  ba.innerHTML = '';
-  secHead(ba, 'Browse All');
-  // "Default" and "Radio" are placeholders the API returns for stations with no
-  // genre set, not things anyone would browse by.
-  const JUNK = new Set(['Default', 'Radio', 'US Partner Digital']);
-  const genres = [...new Set(Object.values(window.LRD_US.stations).map((x) => x.genre))]
-    .filter((g) => g && !JUNK.has(g)).sort();
-  const grid = grid2Of(genres.slice(0, 16));
-  [...grid.children].forEach((b, i) => {
-    b.addEventListener('click', () => { $('searchInput').value = genres[i]; renderSearch(); });
-  });
-  ba.appendChild(grid);
+  if (shelf($('secBrowseAll'), 'Browse All', state.shelves.liveGenres, (items) => grid2Of(items))) {
+    const g = $('secBrowseAll').querySelector('.grid2');
+    [...g.children].forEach((b, i) => {
+      const name = state.shelves.liveGenres[i].title;
+      b.addEventListener('click', () => { $('searchInput').value = name; renderSearch(); });
+    });
+  }
+
+  loadShelves(['podcastDirectory', 'liveGenres'], 'search');
 }
 
-/* Podcasts, to its frame: Continue Listening, ad, Recommended For You,
- * Today's Top Podcasts, Our Podcast Picks, iHeartPodcast Networks, Topics. */
-const PODCAST_TOPICS = [
-  'Top 100 Overall', 'Top 100 True Crime', 'Comedy', 'Society & Culture',
-  'Sports', 'Crime', 'News', 'Health', 'Business & Finance', 'Politics',
-  'Spirituality', 'Black Culture', 'Entertainment', 'Latino', 'Music', 'History',
-];
-
+/* Podcasts, to PodcastsContentTabView. Continue Listening and Recommended For
+ * You are both personalised endpoints behind a profile, so with no session
+ * they come back empty and, per displayableSections, do not render. */
 function renderPodcasts() {
-  const cl = $('secContinue');
-  cl.innerHTML = '';
-  secHead(cl, 'Continue Listening');
-  const row = document.createElement('div');
-  row.className = 'cl-row';
-  row.innerHTML = '<span class="ph"></span>' +
-    '<span class="txt"><span class="t">Podcast Episode Title</span>' +
-    '<span class="d">26 minutes remaining</span></span>' +
-    '<img class="act" src="assets/v2/row-overflow.svg" alt="">';
-  cl.appendChild(row);
+  $('secContinue').hidden = true;
 
-  const rec = $('secPodRec');
-  rec.innerHTML = '';
-  secHead(rec, 'Recommended For You');
-  rec.appendChild(railOf([0, 1, 2, 3, 4], () =>
-    squareCard('Title Copy That Keeps...', 'Subtitle copy')));
+  $('secPodRec').hidden = true;
 
-  const top = $('secPodTop');
-  top.innerHTML = '';
-  secHead(top, "Today's Top Podcasts");
-  top.appendChild(railOf([0, 1, 2, 3, 4], () =>
-    squareCard('Title Copy That Keeps...', 'Subtitle copy')));
+  shelf($('secPodTop'), "Today's Top Podcasts", state.shelves.popularPodcasts,
+        (items) => railOf(items, (it) => squareCard(it, true)));
 
-  const picks = $('secPodPicks');
-  picks.innerHTML = '';
-  secHead(picks, 'Our Podcast Picks');
-  picks.appendChild(railOf([0, 1, 2], () =>
-    listCard('Podcast Title', 'Description that keeps going and going')));
+  shelf($('secPodPicks'), 'Our Podcast Picks', state.shelves.featuredPodcasts,
+        (items) => railOf(items, listCard));
 
-  const nets = $('secPodNetworks');
-  nets.innerHTML = '';
-  secHead(nets, 'iHeartPodcast Networks');
-  nets.appendChild(railOf([0, 1, 2, 3], () => wideCard()));
+  shelf($('secPodNetworks'), 'iHeartPodcast Networks', state.shelves.podcastNetworks,
+        (items) => railOf(items, wideCard));
 
-  const topics = $('secPodTopics');
-  topics.innerHTML = '';
-  secHead(topics, 'Topics');
-  topics.appendChild(grid2Of(PODCAST_TOPICS));
+  shelf($('secPodTopics'), 'Topics', state.shelves.podcastDirectory,
+        (items) => grid2Of(items));
+
+  loadShelves(['popularPodcasts', 'featuredPodcasts', 'podcastNetworks', 'podcastDirectory'], 'podcasts');
 }
 
-/* Playlists, to its frame: Recommended For You, ad, Moods & Activities,
- * Decades, Featured Playlists, Genres. */
-const PL_MOODS = ['Workout', 'Chill', 'Sleep', 'Work', 'Party', 'Focus'];
-const PL_DECADES = ['Now', '2010s', '2000s', '1990s', '1980s', '1970s'];
-const PL_GENRES = [
-  'Charts', 'Pop', 'Country', 'Classic Rock', 'Oldies & Classic Hits',
-  'Alternative', 'Rock', 'R&B & Throwbacks', 'Hip Hop', 'Kids & Family',
-  'Christian', 'Gospel',
-];
-
+/* Playlists, to PlaylistsContentTabView. Recommended For You is personalised
+ * and drops out the same way. Moods and Decades are squareDefault carousels
+ * drawn imageOnly; Genres is a wide grid. */
 function renderPlaylists() {
-  const rec = $('secPlRec');
-  rec.innerHTML = '';
-  secHead(rec, 'Recommended For You');
-  rec.appendChild(railOf([0, 1, 2, 3, 4], () => squareCard('Your Weekly Mix')));
+  $('secPlRec').hidden = true;
 
-  const moods = $('secPlMoods');
-  moods.innerHTML = '';
-  secHead(moods, 'Moods & Activities');
-  moods.appendChild(railOf(PL_MOODS, (m, i) => squareCard(null, null, m, (i * 53 + 30) % 360)));
+  shelf($('secPlMoods'), 'Moods & Activities', state.shelves.moods,
+        (items) => railOf(items, (it) => squareCard(it, false)));
 
-  const dec = $('secPlDecades');
-  dec.innerHTML = '';
-  secHead(dec, 'Decades');
-  dec.appendChild(railOf(PL_DECADES, (d, i) => squareCard(null, null, d, (i * 47 + 200) % 360)));
+  shelf($('secPlDecades'), 'Decades', state.shelves.decades,
+        (items) => railOf(items, (it) => squareCard(it, false)));
 
-  const feat = $('secPlFeatured');
-  feat.innerHTML = '';
-  secHead(feat, 'Featured Playlists');
-  feat.appendChild(railOf([0, 1, 2], () => listCard('Playlist Name', 'Playlist Description')));
+  shelf($('secPlFeatured'), 'Featured Playlists', state.shelves.featuredPlaylists,
+        (items) => railOf(items, listCard));
 
-  const gen = $('secPlGenres');
-  gen.innerHTML = '';
-  secHead(gen, 'Genres');
-  gen.appendChild(grid2Of(PL_GENRES));
+  shelf($('secPlGenres'), 'Genres', state.shelves.playlistGenres,
+        (items) => grid2Of(items));
+
+  loadShelves(['moods', 'decades', 'featuredPlaylists', 'playlistGenres'], 'playlists');
 }
 
 function noteSearch(q) {

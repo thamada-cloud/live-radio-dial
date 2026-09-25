@@ -509,21 +509,24 @@
     display:flex;align-items:center;justify-content:center;color:var(--on-surface-secondary);font-size:24px;font-weight:300}
 
   /* Live Radio Dial cards: logo, title, description, play. */
+  /* RadioDialCarouselLayout gives 138x68 with hSpacing 12 and a 0.5 peek;
+     RadioCardView pads 8 all round, stacks title over a row of subtitle plus a
+     24pt play icon, and spaces them by 2. The subtitle holds a 32pt floor so
+     a one line description does not shrink the card. */
   .dial-card{
-    width:calc((100vw - var(--peek) - 16px - var(--pad-md1)) / 2);
-    height:80px;flex-shrink:0;text-align:left;position:relative;
+    width:138px;height:68px;flex-shrink:0;text-align:left;
     background:var(--container-primary-inverse);border:none;
     border-radius:var(--radius-primary);padding:var(--pad-md1);
     box-shadow:0 1px 3px 0 var(--surface-shadow);
-    display:flex;flex-direction:column;gap:var(--pad-sm1);overflow:hidden;
+    display:flex;flex-direction:column;gap:2px;overflow:hidden;
   }
   .dial-card .t{font-size:14px;line-height:16px;font-weight:600;letter-spacing:-.5px;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%}
-  .dial-card .d{font-size:12px;line-height:16px;letter-spacing:-.35px;
-    color:var(--on-surface-secondary);padding-right:32px;
+  .dial-card .row{display:flex;align-items:flex-end;gap:var(--pad-md1);min-width:0}
+  .dial-card .d{flex:1;min-width:0;min-height:32px;
+    font-size:12px;line-height:16px;letter-spacing:-.35px;color:var(--on-surface-secondary);
     display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-  .dial-card .play{position:absolute;right:var(--pad-md1);bottom:var(--pad-md1);
-    width:28px;height:28px}
+  .dial-card .play{width:24px;height:24px;flex-shrink:0}
 
   .scan-btn{
     display:flex;align-items:center;justify-content:center;gap:var(--pad-sm2,6px);width:100%;
@@ -739,6 +742,14 @@
     color:var(--on-surface-primary);outline:none;
   }
   .search-field input::placeholder{color:var(--on-surface-secondary)}
+
+  /* A rail scrolls on x, which makes the browser clip on y as well, and that
+     shears the cards' 0 1px 3px shadow off top and bottom. Pad the scroller and
+     pull the same amount back off as margin, so the shadow has room without
+     moving anything. */
+  .rail-x,.preset-row,.rank-rail,.lib-row,.shelf .rail{
+    padding-top:4px;padding-bottom:6px;margin-top:-4px;margin-bottom:-6px;
+  }
   [hidden]{display:none !important}
 </style>
 </head>
@@ -1696,13 +1707,14 @@ function renderHome() {
   secHead(dl, 'Live Radio Dial',
     headChip(market.city, { lead: GLYPH_LOCATION, caret: false }) + headChip('All Genres'));
   const drail = document.createElement('div');
-  drail.className = 'preset-row';
+  drail.className = 'rail-x';
   state.stations.slice(0, 10).forEach((st) => {
     const c = document.createElement('button');
     c.className = 'dial-card';
     c.innerHTML = `<span class="t">${st.name}</span>` +
+                  '<span class="row">' +
                   `<span class="d">${st.description || st.genre}</span>` +
-                  `<img class="play" src="assets/v2/play-fill.svg" alt="">`;
+                  '<img class="play" src="assets/v2/play-fill.svg" alt=""></span>';
     c.addEventListener('click', () => { setStation(st.id, true); switchView('radio'); });
     drail.appendChild(c);
   });

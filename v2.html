@@ -460,11 +460,17 @@
   /* Search swaps the brand for a plain title. */
   .app-header .title{font-size:24px;line-height:30px;font-weight:700;letter-spacing:-.4px;margin-right:auto}
 
+  /* The app's own house creative, which DefaultLeaderboardAd paints into this
+     slot whenever a programmatic ad is not available. It is the right fill for
+     a research build: it is a genuine 320x50 that iHeart serves itself, it is
+     the same on every load, and it pulls in no ad tech and no third party
+     tracking of a participant. It does not navigate, so a task cannot end with
+     someone in an app store. */
   .ad-slot{
-    width:320px;height:50px;margin:var(--pad-lg) auto;border-radius:2px;
-    background:#c9ced2;display:flex;align-items:center;justify-content:center;
-    color:#6b7280;font-size:12px;font-weight:600;
+    width:320px;height:50px;margin:var(--pad-lg) auto;border-radius:2px;overflow:hidden;
+    background:#c9ced2;
   }
+  .ad-slot img{width:100%;height:100%;object-fit:cover;display:block}
 
   /* Mini player, pinned above the tab bar. MiniPlayer.swift is a VStack of the
      content row and, when there is a duration, a progress bar. The row pads
@@ -826,7 +832,9 @@
 <main class="page view" id="viewHome">
   <section class="sec" id="secPresets"></section>
   <section class="sec" id="secDial"></section>
-  <div class="ad-slot">320 x 50</div>
+  <div class="ad-slot" role="img" aria-label="Advertisement">
+    <img src="https://www.iheart.com/public/listen/ad-fallback-mobile.png" alt="" loading="lazy">
+  </div>
   <section class="sec" id="secRecent"></section>
   <section class="sec" id="secLibrary"></section>
   <section class="sec" id="secTrending"></section>
@@ -854,7 +862,9 @@
 
 <main class="page view" id="viewPodcasts">
   <section class="sec" id="secContinue"></section>
-  <div class="ad-slot">320 x 50</div>
+  <div class="ad-slot" role="img" aria-label="Advertisement">
+    <img src="https://www.iheart.com/public/listen/ad-fallback-mobile.png" alt="" loading="lazy">
+  </div>
   <section class="sec" id="secPodRec"></section>
   <section class="sec" id="secPodTop"></section>
   <section class="sec" id="secPodPicks"></section>
@@ -864,7 +874,9 @@
 
 <main class="page view" id="viewPlaylists">
   <section class="sec" id="secPlRec"></section>
-  <div class="ad-slot">320 x 50</div>
+  <div class="ad-slot" role="img" aria-label="Advertisement">
+    <img src="https://www.iheart.com/public/listen/ad-fallback-mobile.png" alt="" loading="lazy">
+  </div>
   <section class="sec" id="secPlMoods"></section>
   <section class="sec" id="secPlDecades"></section>
   <section class="sec" id="secPlFeatured"></section>

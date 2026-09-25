@@ -486,11 +486,13 @@
   .mini{
     position:fixed;left:0;right:0;z-index:45;
     bottom:calc(49px + env(safe-area-inset-bottom));
-    display:flex;align-items:center;gap:var(--pad-md2);
-    padding:var(--pad-sm1);
+    display:flex;flex-direction:column;
     background:var(--container-primary-inverse);
-    border-radius:12px 12px 0 0;
+    border-radius:12px 12px 0 0;overflow:hidden;
   }
+  /* The HStack carries the Padding.sm1 inset; the bar is its sibling in the
+     VStack, so it runs edge to edge. 4 + 52 + 4 + 3 is the 63 the frame shows. */
+  .mini-row{display:flex;align-items:center;gap:var(--pad-md2);padding:var(--pad-sm1)}
   .mini .art{width:52px;height:52px;border-radius:var(--radius-primary);overflow:hidden;
     background:#fff;flex-shrink:0;box-shadow:0 1px 3px 0 var(--surface-shadow)}
   .mini .art img{width:100%;height:100%;object-fit:cover}
@@ -504,14 +506,7 @@
   /* MiniPlayer.swift is a VStack of the row and then ProgressBarView: a 3pt
      containerTertiary track with a containerEmphasis fill, so the bar sits
      between the player and the tab bar. */
-  .mini{flex-wrap:wrap}
-  .mini .progress{
-    /* The row carries the Padding.sm1 inset; the bar is a sibling of it in the
-       VStack, so it runs the full width of the player, edge to edge. */
-    flex:0 0 calc(100% + var(--pad-md1));order:2;height:3px;
-    background:var(--container-quaternary);
-    margin:var(--pad-sm1) calc(-1 * var(--pad-sm1)) calc(-1 * var(--pad-sm1));
-  }
+  .mini .progress{height:3px;background:var(--container-quaternary)}
   .mini .progress i{display:block;height:100%;background:var(--container-emphasis,var(--brand-red))}
   .mini .controls{display:flex;align-items:center;gap:var(--pad-sm1);flex-shrink:0;
     min-width:80px;max-width:100px;justify-content:flex-end}
@@ -915,15 +910,17 @@
 </section>
 
 <div class="mini" id="miniPlayer" hidden>
-  <div class="art"><img id="miniArt" src="" alt=""></div>
-  <div class="lines">
-    <span class="l1" id="miniL1"></span>
-    <span class="l2" id="miniL2"></span>
-    <span class="l3" id="miniL3"></span>
-  </div>
-  <div class="controls">
-    <button class="m-btn" aria-label="Presets"><img src="assets/app/presets.svg" alt=""></button>
-    <button class="m-play" id="miniPlay" aria-label="Play"><img src="assets/v2/playback-play.svg" alt=""></button>
+  <div class="mini-row">
+    <div class="art"><img id="miniArt" src="" alt=""></div>
+    <div class="lines">
+      <span class="l1" id="miniL1"></span>
+      <span class="l2" id="miniL2"></span>
+      <span class="l3" id="miniL3"></span>
+    </div>
+    <div class="controls">
+      <button class="m-btn" aria-label="Presets"><img src="assets/app/presets.svg" alt=""></button>
+      <button class="m-play" id="miniPlay" aria-label="Play"><img src="assets/v2/playback-play.svg" alt=""></button>
+    </div>
   </div>
   <div class="progress" aria-hidden="true"><i id="miniProgress" style="width:50%"></i></div>
 </div>

@@ -23,6 +23,8 @@
     --hairline:#e6eaed;                 /* grey200    */
     --brand-red:#c6002b;
     --on-surface-informative:#0055b7; /* blue600, used for chips and Show All */
+    --on-surface-tertiary:#a9afb2;    /* grey300, the sheet grabber */
+    --grey-400:#717277;               /* location row subtitles */
     --radius-primary:6px;      /* corner_radius_rounded_primary */
     --radius-tertiary:16px;    /* corner_radius_rounded_tertiary */
     /* Padding scale */
@@ -646,7 +648,8 @@
   .scrim{position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.4);touch-action:none}
   .sheet{
     position:fixed;left:0;right:0;bottom:0;z-index:101;display:flex;flex-direction:column;
-    background:#fff;border-radius:16px 16px 0 0;box-shadow:0 -10px 30px rgba(0,0,0,.25);
+    background:var(--container-primary-inverse);border-radius:12px 12px 0 0;
+    box-shadow:0 -10px 30px rgba(0,0,0,.25);
     max-height:80vh;animation:sheet-up .3s ease-out;overflow:hidden;
     padding-bottom:env(safe-area-inset-bottom);
   }
@@ -656,16 +659,26 @@
   /* While a sheet is open the page behind it is pinned, so a touch that leaves
      the list cannot pan it. The offset keeps the page where it was. */
   body.sheet-open{position:fixed;left:0;right:0;width:100%;overflow:hidden}
-  .sheet .grabber{display:flex;justify-content:center;padding:12px 0 8px}
-  .sheet .grabber i{width:40px;height:4px;border-radius:999px;background:#d1d5db;display:block}
+  /* SheetHeaderView: a 36x5 onSurfaceTertiary capsule in a 21pt block, then a
+     44pt header with the title centred in .h4 and tertiary Cancel / Save text
+     buttons either side. No rule under it. */
+  .sheet .grabber{display:flex;align-items:center;justify-content:center;height:21px}
+  .sheet .grabber i{width:36px;height:5px;border-radius:999px;background:var(--on-surface-tertiary);display:block}
   .sheet header{
-    display:flex;align-items:center;justify-content:space-between;
-    padding:8px 24px 16px;border-bottom:1px solid #e5e7eb;
+    position:relative;display:flex;align-items:center;justify-content:space-between;
+    min-height:44px;padding:0 var(--pad-lg) var(--pad-lg);gap:var(--pad-md2);
   }
-  .sheet header h2{font-size:20px;line-height:24px;font-weight:600;color:var(--on-surface-primary)}
-  .sheet header button{padding:8px;border-radius:var(--radius-circular)}
-  .sheet header button:hover{background:#f3f4f6}
-  .sheet header .icon{width:20px;height:20px}
+  .sheet header h2{
+    position:absolute;left:0;right:0;margin:0 auto;pointer-events:none;
+    font-size:18px;line-height:24px;font-weight:600;text-align:center;
+    color:var(--on-surface-primary);
+  }
+  .sheet .hdr-btn{
+    position:relative;z-index:1;padding:0;background:none;border:none;
+    font-size:16px;line-height:20px;font-weight:600;color:var(--on-surface-primary);
+  }
+  .sheet .hdr-btn[hidden]{display:none !important}
+  .sheet header .spacer{flex:1}
   /* min-height:0 is load bearing. A column flex item defaults to min-height
      auto, so without it .options grows to its content, never scrolls, and the
      touch falls through to the page behind. The basis stays auto so a short
@@ -690,12 +703,7 @@
   .sheet .option[aria-selected="true"]{background:rgba(198,0,43,.1)}
   .sheet .option[aria-selected="true"] .name{color:var(--brand-red)}
   .sheet .option[aria-selected="true"] .icon{filter:invert(16%) sepia(96%) saturate(5000%) hue-rotate(338deg) brightness(85%) contrast(105%)}
-  .sheet footer{padding:16px 24px;border-top:1px solid #e5e7eb;background:#f9fafb}
-  .sheet footer button{
-    width:100%;justify-content:center;background:var(--brand-red);color:#fff;
-    padding:12px;border-radius:8px;font-weight:500;
-  }
-  .sheet footer button:hover{background:#a00023}
+
   /* Location sheet rows, per iOS HeaderSheetStyle:
      locationRowCellHeight 64, locationRowEdgeInsets 4, icon 20,
      title = body3, subtitle = caption1 in grey400. */
@@ -703,10 +711,11 @@
     width:100%;height:64px;display:flex;align-items:center;justify-content:space-between;
     gap:12px;padding:0 4px;background:transparent;text-align:left;
   }
-  .sheet .loc-row:hover{background:#f3f4f6;border-radius:8px}
+  /* listRowBackground is Color.clear, so a row has no fill and no selected
+     state; which method is active is shown only by the filled location icon. */
   .sheet .loc-row .text{display:flex;flex-direction:column;gap:2px;min-width:0}
-  .sheet .loc-row .t{font-size:16px;line-height:20px;color:var(--on-surface-primary)}
-  .sheet .loc-row .s{font-size:12px;line-height:16px;letter-spacing:-.35px;color:#9ca3af;
+  .sheet .loc-row .t{font-size:14px;line-height:16px;color:var(--on-surface-primary)}
+  .sheet .loc-row .s{font-size:12px;line-height:16px;letter-spacing:-.35px;color:var(--grey-400);
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .sheet .loc-row .icon{width:20px;height:20px;flex-shrink:0;color:var(--on-surface-primary)}
   .sheet .loc-row .icon.dim{opacity:.35}
@@ -815,6 +824,38 @@
   .rail-x,.preset-row,.rank-rail,.lib-row,.shelf .rail{
     padding-top:4px;padding-bottom:6px;margin-top:-4px;margin-bottom:-6px;
   }
+
+  /* Wheel picker. Both the genre sheet (PickerSheetView) and Choose a City
+     (LocationPickerView) are SwiftUI Pickers in .wheel style, not lists, so
+     this is a snap-scrolling column with the selection held in a centre band
+     and the rows away from it falling off. .h4 is the picker font. */
+  .wheels{display:flex;gap:var(--pad-lg);padding:0 var(--pad-lg)}
+  .wheel{
+    position:relative;flex:1;min-width:0;height:216px;overflow-y:auto;
+    scroll-snap-type:y mandatory;overscroll-behavior:contain;
+    -webkit-overflow-scrolling:touch;scrollbar-width:none;
+    -webkit-mask-image:linear-gradient(to bottom,transparent,#000 28%,#000 72%,transparent);
+    mask-image:linear-gradient(to bottom,transparent,#000 28%,#000 72%,transparent);
+  }
+  .wheel::-webkit-scrollbar{display:none}
+  .wheel .pad{height:91px}
+  /* display:block, not flex: text-overflow has no effect on a flex container,
+     so a long city name was being clipped mid-glyph instead of ellipsised. */
+  .wheel .opt{
+    display:block;height:34px;line-height:34px;text-align:center;
+    scroll-snap-align:center;width:100%;padding:0 var(--pad-md1);
+    font-size:18px;color:var(--on-surface-primary);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    opacity:.35;transition:opacity .15s linear;background:none;border:none;
+  }
+  .wheel .opt.is-on{opacity:1}
+  /* The band the selected row sits in, drawn behind both wheels. */
+  .wheel-band{
+    position:absolute;left:var(--pad-lg);right:var(--pad-lg);top:50%;height:34px;
+    transform:translateY(-50%);border-radius:8px;background:rgba(39,41,45,.06);
+    pointer-events:none;
+  }
+  .wheels-wrap{position:relative}
   [hidden]{display:none !important}
 </style>
 </head>
@@ -917,14 +958,13 @@
 <div class="scrim" id="scrim" hidden></div>
 <section class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle" hidden>
   <div class="grabber"><i></i></div>
-  <header style="gap:8px">
-    <button class="back" id="sheetBack" aria-label="Back" hidden><img class="icon" src="assets/v2/sheet-back.svg" alt=""></button>
+  <header>
+    <button class="hdr-btn" id="sheetCancel" hidden>Cancel</button>
     <h2 id="sheetTitle"></h2>
-    <button id="sheetClose" aria-label="Close"><img class="icon" src="assets/v2/close.svg" alt=""></button>
+    <button class="hdr-btn" id="sheetSave" hidden>Save</button>
   </header>
   <div class="options" id="sheetOptions"></div>
   <p class="note" id="sheetNote" hidden></p>
-  <footer id="sheetFooter"><button id="sheetApply">Apply</button></footer>
 </section>
 
 <div class="mini" id="miniPlayer" hidden>
@@ -1235,13 +1275,71 @@ function renderSheet() {
   if (!kind) { scrim.hidden = sheet.hidden = true; lockPage(false); return; }
   scrim.hidden = sheet.hidden = false;
   lockPage(true);
-  $('sheetFooter').hidden = (kind === 'row');
   if (kind === 'row') return renderRowSheet();
   if (kind === 'location') return renderLocationSheet();
   return renderValueSheet(kind);
 }
 
 /* A plain list of values with counts. Used by the genre sheet. */
+
+/* Builds one .wheel column. iOS wheels are continuous scrollers that settle on
+ * whatever row is under the centre band, so the value commits on settle rather
+ * than on tap, and a tap just scrolls that row to the middle. */
+function wheel(items, selectedIndex, onSettle) {
+  const col = document.createElement('div');
+  col.className = 'wheel';
+  const top = document.createElement('div'); top.className = 'pad';
+  const bot = document.createElement('div'); bot.className = 'pad';
+  col.appendChild(top);
+  items.forEach((label, i) => {
+    const b = document.createElement('button');
+    b.className = 'opt' + (i === selectedIndex ? ' is-on' : '');
+    b.textContent = label;
+    b.addEventListener('click', () => col.scrollTo({ top: i * 34, behavior: 'smooth' }));
+    col.appendChild(b);
+  });
+  col.appendChild(bot);
+
+  const opts = () => [...col.querySelectorAll('.opt')];
+  const mark = (i) => opts().forEach((el, n) => el.classList.toggle('is-on', n === i));
+  let settle;
+  col.addEventListener('scroll', () => {
+    const i = Math.max(0, Math.min(items.length - 1, Math.round(col.scrollTop / 34)));
+    mark(i);
+    clearTimeout(settle);
+    settle = setTimeout(() => onSettle(i), 120);
+  });
+  // Put the current value under the band before the sheet animates in.
+  requestAnimationFrame(() => { col.scrollTop = Math.max(0, selectedIndex) * 34; });
+  return col;
+}
+
+/* Two wheels side by side with one shared selection band behind them. */
+function wheelGroup(columns) {
+  const wrap = document.createElement('div');
+  wrap.className = 'wheels-wrap';
+  const band = document.createElement('div');
+  band.className = 'wheel-band';
+  const row = document.createElement('div');
+  row.className = 'wheels';
+  columns.forEach((c) => row.appendChild(wheel(c.items, c.index, c.onSettle)));
+  wrap.append(band, row);
+  return wrap;
+}
+
+/* Cancel and Save in the header, per SheetHeaderView and HeaderSheetTitleBar.
+ * Passing no onSave leaves the header title-only, which is the shape the
+ * location sheet and the row overflow sheet use. */
+function sheetButtons(onCancel, onSave) {
+  const c = $('sheetCancel'), sv = $('sheetSave');
+  c.hidden = sv.hidden = !onSave;
+  if (!onSave) return;
+  c.onclick = onCancel;
+  sv.onclick = onSave;
+}
+
+/* PickerSheetView: SheetHeaderView with Cancel and Save, then a single wheel
+ * Picker. Not a list of rows with checkmarks, and no Apply footer. */
 function renderValueSheet(kind) {
   const cfg = SHEETS[kind];
   const counts = {};
@@ -1250,29 +1348,21 @@ function renderValueSheet(kind) {
     if (v) counts[v] = (counts[v] || 0) + 1;
   });
   const values = Object.keys(counts).sort();
+  const options = [{ v: null, label: cfg.allLabel }]
+    .concat(values.map((v) => ({ v, label: `${v} (${counts[v]})` })));
   const current = cfg.get();
+  let picked = Math.max(0, options.findIndex((o) => o.v === current));
 
   $('sheetTitle').textContent = cfg.title;
   $('sheetNote').hidden = true;
-  $('sheetBack').hidden = true;
+  sheetButtons(closeSheet, () => { cfg.set(options[picked].v); closeSheet(); render(); });
 
   const host = $('sheetOptions');
   host.innerHTML = '';
-  [{ v: null, label: cfg.allLabel, count: null }]
-    .concat(values.map((v) => ({ v, label: v, count: counts[v] })))
-    .forEach((opt) => {
-      const b = document.createElement('button');
-      b.className = 'option';
-      b.setAttribute('aria-selected', String(current === opt.v));
-      b.innerHTML =
-        `<span class="label"><span class="name">${opt.label}</span>` +
-        (opt.count != null ? `<span class="count">(${opt.count})</span>` : '') + '</span>' +
-        (current === opt.v ? '<img class="icon" src="assets/v2/check.svg" alt="">' : '');
-      b.addEventListener('click', () => { cfg.set(opt.v); renderSheet(); render(); });
-      host.appendChild(b);
-    });
+  host.appendChild(wheelGroup([
+    { items: options.map((o) => o.label), index: picked, onSettle: (i) => { picked = i; } },
+  ]));
 }
-
 
 /* ---- row overflow sheet ----
  * Options and their toggling behaviour follow the iOS app's radio overflow menu
@@ -1305,8 +1395,8 @@ function renderRowSheet() {
   ];
 
   $('sheetTitle').textContent = st.name;
-  $('sheetBack').hidden = true;
   $('sheetNote').hidden = true;
+  sheetButtons(null, null);
 
   const host = $('sheetOptions');
   host.innerHTML = '';
@@ -1343,61 +1433,35 @@ function renderLocationSheet() {
   const market = currentMarket();
 
   if (state.sheetPage === 'cities') {
+    // LocationPickerView is a HeaderSheetTitleBar over two wheel Pickers,
+    // country then city. Not a searchable list. The prototype's catalogue is
+    // US only, so the country wheel has the one entry the real one would show.
     $('sheetTitle').textContent = 'Choose a City';
-    $('sheetBack').hidden = false;
     $('sheetNote').hidden = true;
 
-    // 251 markets is too many to scroll, so the list is filtered by a search
-    // field. iOS uses two wheel pickers (country then city) for the same job.
-    const search = document.createElement('input');
-    search.className = 'city-search';
-    search.type = 'search';
-    search.placeholder = 'Search cities';
-    search.value = state.citySearch;
-    search.addEventListener('input', () => {
-      state.citySearch = search.value;
-      renderLocationSheet();
-      const again = host.querySelector('.city-search');
-      if (again) { again.focus(); again.setSelectionRange(again.value.length, again.value.length); }
-    });
-    host.appendChild(search);
+    const cities = window.LRD_US.markets.map((m) => ({ id: m[0], label: `${m[1]}, ${m[2]}` }));
+    let picked = Math.max(0, cities.findIndex((c) => c.id === state.marketId));
 
-    const q = state.citySearch.trim().toLowerCase();
-    const matches = window.LRD_US.markets
-      .filter((m) => !q || `${m[1]}, ${m[2]}`.toLowerCase().includes(q))
-      .slice(0, 60);
-
-    if (!matches.length) {
-      const p = document.createElement('p');
-      p.className = 'empty';
-      p.textContent = 'No cities match "' + state.citySearch + '".';
-      host.appendChild(p);
-      return;
-    }
-
-    matches.forEach((m) => {
-      const selected = m[0] === state.marketId;
-      const b = document.createElement('button');
-      b.className = 'option';
-      b.setAttribute('aria-selected', String(selected));
-      b.innerHTML = `<span class="label"><span class="name">${m[1]}, ${m[2]}</span>` +
-        `<span class="count">(${m[3]})</span></span>` +
-        (selected ? '<img class="icon" src="assets/v2/check.svg" alt="">' : '');
-      b.addEventListener('click', () => {
-        switchMarket(m[0]);
+    sheetButtons(
+      () => { state.sheetPage = 'main'; renderSheet(); },
+      () => {
+        switchMarket(cities[picked].id);
         state.locationMethod = 'picker';
         state.sheetPage = 'main';
-        state.citySearch = '';
-        renderSheet(); render();
-      });
-      host.appendChild(b);
-    });
+        closeSheet(); render();
+      }
+    );
+
+    host.appendChild(wheelGroup([
+      { items: ['United States'], index: 0, onSettle: () => {} },
+      { items: cities.map((c) => c.label), index: picked, onSettle: (i) => { picked = i; } },
+    ]));
     return;
   }
 
   $('sheetTitle').textContent = 'Update Location';
-  $('sheetBack').hidden = true;
   $('sheetNote').hidden = true;
+  sheetButtons(null, null);
 
   const rows = [
     { m: 'current', title: 'Use Current Location', sub: DETECTED_MARKET.label },
@@ -2416,9 +2480,7 @@ function render() {
     $('searchInput').value = ''; renderSearch(); $('searchInput').focus();
   });
   $('scrim').addEventListener('click', closeSheet);
-  $('sheetClose').addEventListener('click', closeSheet);
-  $('sheetBack').addEventListener('click', () => { state.sheetPage = 'main'; renderSheet(); });
-  $('sheetApply').addEventListener('click', closeSheet);
+  // Cancel and Save are wired per sheet by sheetButtons; the scrim still closes.
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeSheet(); });
 
   $('btnLike').addEventListener('click', () => {

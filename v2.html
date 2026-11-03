@@ -1582,8 +1582,9 @@ function renderMini() {
   const t = state.track;
   $('miniArt').src = t && t.art ? t.art : st.logo;
   $('miniL1').textContent = st.name;
-  $('miniL2').textContent = t ? t.title : (show ? show.title : st.name);
-  $('miniL3').textContent = t ? t.artist : (st.description || st.genre);
+  // Same order as the hero, so the two never disagree about what is on.
+  $('miniL2').textContent = show ? show.title : (t ? t.title : st.name);
+  $('miniL3').textContent = (!show && t) ? t.artist : (st.description || st.genre);
   $('miniPlay').querySelector('img').src =
     state.playing ? 'assets/v2/playback-stop.svg' : 'assets/v2/playback-play.svg';
   $('miniPlay').setAttribute('aria-label', state.playing ? 'Stop' : 'Play');
@@ -1625,7 +1626,12 @@ function renderNowPlaying() {
   // feed, so they fall back to the show, then to the station name.
   $('npArt').src = track && track.art ? track.art : st.logo;
   $('npArt').alt = track ? `${track.title} artwork` : st.name;
-  const heading = track ? track.title : (show ? show.title : st.name);
+  /* Show first, track second. What is on a station is the show; the record
+     playing under it is incidental and changes every three minutes. A listener
+     deciding where to land wants to know it is Elvis Duran, not which song he
+     happens to be spinning. Track title only leads when the station has no
+     schedule, which is most of the digital-only ones. */
+  const heading = show ? show.title : (track ? track.title : st.name);
   $('npTitle').textContent = heading;
 
   /* The second line is the station's identity, name and description together,

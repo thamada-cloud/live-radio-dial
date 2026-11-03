@@ -286,10 +286,13 @@
        since .page is display:block and has no gap to fall back on. */
     .top-sticky{position:static;padding:0 0 24px;gap:24px}
 
-    /* 320 rather than 360: the copy column runs to ~300px, so a taller image
-       left ~57px of dead space under the thumbs once centring took effect. */
+    /* The artwork was 320 to match a copy column that ran to ~300px. With the
+       badge, meta row and description gone that column is 140, so 320 was
+       sizing the hero to content that no longer exists and leaving 180px of
+       empty space beside the image. 240 sizes it to what is actually there and
+       starts the station list ~80px higher. */
     .now{flex-direction:row;align-items:center;gap:40px}
-    .now .art{order:2;width:320px;height:320px;flex-shrink:0}
+    .now .art{order:2;width:240px;height:240px;flex-shrink:0}
     .meta-row{order:1;flex:1;min-width:0;flex-direction:column;align-items:flex-start;gap:20px}
     .copy{width:100%;display:flex;flex-direction:column;align-items:flex-start;gap:0}
     /* The phone clips this to one line with a fade; here it can breathe. */
@@ -297,24 +300,12 @@
     .copy .title{font-size:44px;line-height:50px;font-weight:700;white-space:normal;overflow:visible}
     .copy .subtitle{font-size:16px;line-height:22px;margin-top:8px;white-space:normal;overflow:visible}
 
-    .live-badge{
-      display:inline-block;margin-bottom:12px;padding:4px 10px;border-radius:4px;
-      background:var(--brand-red);color:#fff;
-      font-size:12px;line-height:16px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
-    }
-    .hero-meta{
-      display:flex;align-items:center;gap:8px;margin-top:12px;
-      font-size:14px;line-height:20px;color:var(--on-surface-secondary);
-    }
-    .hero-meta .sep{width:3px;height:3px;border-radius:50%;background:currentColor;opacity:.6}
-    .hero-meta .pill{
-      border:1px solid var(--on-surface-secondary);border-radius:3px;
-      padding:0 6px;font-size:12px;line-height:18px;font-weight:600;
-    }
-    .hero-desc{
-      display:block;margin-top:16px;max-width:60ch;
-      font-size:15px;line-height:22px;color:var(--on-surface-secondary);
-    }
+    /* The live badge, the show-and-frequency meta row and the station
+       description used to appear here, on the grounds that there was room for
+       them. Room is not a reason. Desktop now carries the same four things the
+       phone does, so the hero says the same thing at every width and the list
+       starts higher up. Those three elements stay hidden by the base rule and
+       keep their markup, so bringing any of them back is a one-line change. */
     .thumbs{align-self:flex-start}
     /* No sticky header up here, so nothing stows: reset the wrapper and let
        the chips wrap onto a second line instead of scrolling sideways. */

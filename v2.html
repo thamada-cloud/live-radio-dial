@@ -1625,11 +1625,18 @@ function renderNowPlaying() {
   // feed, so they fall back to the show, then to the station name.
   $('npArt').src = track && track.art ? track.art : st.logo;
   $('npArt').alt = track ? `${track.title} artwork` : st.name;
-  $('npTitle').textContent = track ? track.title : (show ? show.title : st.name);
-  $('npSubtitle').textContent =
-    track  ? [track.artist, st.name].filter(Boolean).join(' • ')
-  : show   ? st.name
-  :          (st.description || st.genre);
+  const heading = track ? track.title : (show ? show.title : st.name);
+  $('npTitle').textContent = heading;
+
+  /* The second line is the station's identity, name and description together,
+     the same pairing the rows below use. It used to be artist and station,
+     which split station identity across two places: the name up here and the
+     description in a separate paragraph that only desktop ever showed. This is
+     a station browser rather than a music player, so what the station is earns
+     the line more than who made the record does. */
+  const desc = st.description || st.genre || '';
+  $('npSubtitle').textContent = heading === st.name ? desc
+    : [st.name, desc].filter(Boolean).join(' • ');
 
   // Wide-screen only.
   const bits = [];
